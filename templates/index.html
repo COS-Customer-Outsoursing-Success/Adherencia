@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claro Ventas — Centro de Monitoreo de Asistencia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════  TOP BAR  ═══════════════════════ -->
+<header class="topbar">
+  <div class="topbar__brand">
+    <div class="topbar__logo">
+      <span class="logo-claro">claro</span>
+    </div>
+    <div class="topbar__titles">
+      <h1 class="topbar__title">Centro de Monitoreo de Asistencia</h1>
+      <p class="topbar__subtitle">Claro Ventas · Bogotá</p>
+    </div>
+  </div>
+  <div class="topbar__meta">
+    <div class="meta-item" id="status-indicator">
+      <span class="status-dot status-dot--ok" id="status-dot"></span>
+      <span id="status-text">Conectado</span>
+    </div>
+    <div class="meta-item meta-item--sep"></div>
+    <div class="meta-item">
+      <span class="meta-label">Última actualización</span>
+      <span class="meta-value" id="last-update">—</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Próxima en</span>
+      <span class="meta-value meta-countdown" id="countdown">30:00</span>
+    </div>
+    <button class="btn-refresh" id="btn-refresh" title="Actualizar ahora">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════  FILTERS  ═══════════════════════ -->
+<section class="filters-bar" id="filters-section">
+  <div class="filters-inner">
+    <div class="filter-group">
+      <label class="filter-label" for="f-supervisor">Supervisor</label>
+      <select class="filter-select" id="f-supervisor">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="f-campana">Campaña</label>
+      <select class="filter-select" id="f-campana">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="f-estado">Estado</label>
+      <select class="filter-select" id="f-estado">
+        <option value="">Todos</option>
+        <option value="Asistio">✅ Asistió</option>
+        <option value="Ausente">❌ Ausente</option>
+        <option value="Retardo">🟡 Retardo</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Hora ingreso</label>
+      <div class="filter-time-range">
+        <input class="filter-input" type="time" id="f-hora-ini" placeholder="Desde" />
+        <span class="filter-time-sep">—</span>
+        <input class="filter-input" type="time" id="f-hora-fin" placeholder="Hasta" />
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-filter-clear" id="btn-clear-filters">Limpiar filtros</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  MAIN CONTENT  ═══════════════════════ -->
+<main class="main-content">
+
+  <!-- KPI CARDS -->
+  <section class="kpi-grid">
+    <div class="kpi-card kpi-card--blue">
+      <div class="kpi-icon kpi-icon--blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-programados">—</div>
+        <div class="kpi-label">Programados</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--green">
+      <div class="kpi-icon kpi-icon--green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-asistieron">—</div>
+        <div class="kpi-label">Asistieron</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--red">
+      <div class="kpi-icon kpi-icon--red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-ausentes">—</div>
+        <div class="kpi-label">Ausentes</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--yellow">
+      <div class="kpi-icon kpi-icon--yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-retardos">—</div>
+        <div class="kpi-label">Retardos</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--red-pct">
+      <div class="kpi-icon kpi-icon--red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value kpi-value--pct" id="kpi-pct-ausentismo">—</div>
+        <div class="kpi-label">% Ausentismo</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--green-pct">
+      <div class="kpi-icon kpi-icon--green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value kpi-value--pct" id="kpi-pct-puntualidad">—</div>
+        <div class="kpi-label">% Puntualidad</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--yellow-pct">
+      <div class="kpi-icon kpi-icon--yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value kpi-value--pct" id="kpi-pct-retardos">—</div>
+        <div class="kpi-label">% Retardos</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════  COMPARATIVO GENERAL + AUSENTISMO | RETARDOS  ═══════════════════ -->
+  <div class="panel-row">
+
+    <!-- COLUMNA IZQUIERDA: Comparativo General + Ausentismo apilados -->
+    <div class="panel-col">
+
+      <!-- COMPARATIVO GENERAL -->
+      <section class="panel-section" id="panel-comparativo">
+        <div class="panel-section__header">
+          <h2 class="section-title">Comparativo General</h2>
+          <p class="section-subtitle">Programados vs. Asistieron vs. Ausentes vs. Retardos</p>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-card__header">
+              <h3 class="chart-card__title">Distribución Global</h3>
+              <p class="chart-card__subtitle">Estado de la jornada actual</p>
+            </div>
+            <div class="chart-card__body chart-card__body--donut">
+              <canvas id="chart-donut"></canvas>
+              <div class="donut-legend" id="donut-legend"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AUSENTISMO -->
+      <section class="panel-section panel-section--red" id="panel-ausentismo">
+        <div class="panel-section__header">
+          <div>
+            <h2 class="section-title">Ausentismo</h2>
+            <p class="section-subtitle">Qué asesores faltaron y bajo qué supervisor</p>
+          </div>
+          <div class="section-stat section-stat--red">
+            <span class="section-stat__value" id="ausentismo-total">—</span>
+            <span class="section-stat__label">Ausentes hoy</span>
+          </div>
+        </div>
+
+        <div class="panel-stack">
+          <div class="chart-card">
+            <div class="chart-card__header">
+              <h3 class="chart-card__title">Ausentes por Supervisor</h3>
+            </div>
+            <div class="chart-card__body chart-card__body--sm">
+              <canvas id="chart-ausentismo-bar"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card chart-card--table">
+            <div class="chart-card__header">
+              <h3 class="chart-card__title">Listado de Ausentes</h3>
+              <p class="chart-card__subtitle" id="ausentismo-count">—</p>
+            </div>
+            <div class="table-wrapper table-wrapper--scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Asesor</th>
+                    <th>Supervisor</th>
+                    <th class="text-center">H. Prog.</th>
+                  </tr>
+                </thead>
+                <tbody id="ausentismo-tbody">
+                  <tr><td colspan="3" class="empty-row">Cargando datos…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RETARDOS -->
+    <section class="panel-section panel-section--yellow" id="panel-retardos">
+      <div class="panel-section__header">
+        <div>
+          <h2 class="section-title">Retardos</h2>
+          <p class="section-subtitle">Qué asesores llegaron tarde y cuánto tiempo acumularon</p>
+        </div>
+        <div class="section-stat section-stat--yellow">
+          <span class="section-stat__value" id="retardos-total">—</span>
+          <span class="section-stat__label">Retardos hoy</span>
+        </div>
+      </div>
+
+      <div class="avg-retardo-row" id="avg-retardo-list"></div>
+
+      <div class="panel-stack">
+        <div class="chart-card">
+          <div class="chart-card__header">
+            <h3 class="chart-card__title">Tiempo de Retardo por Asesor</h3>
+          </div>
+          <div class="chart-card__body chart-card__body--md">
+            <canvas id="chart-retardo-bar"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card chart-card--table">
+          <div class="chart-card__header">
+            <h3 class="chart-card__title">Listado de Retardos</h3>
+            <p class="chart-card__subtitle" id="retardos-count">—</p>
+          </div>
+          <div class="table-wrapper table-wrapper--scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Asesor</th>
+                  <th>Supervisor</th>
+                  <th class="text-center">H. Prog.</th>
+                  <th class="text-center">H. Ing.</th>
+                  <th class="text-center">Retardo</th>
+                </tr>
+              </thead>
+              <tbody id="retardos-tbody">
+                <tr><td colspan="5" class="empty-row">Cargando datos…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CHARTS ROW: Asistencia por supervisor + Ranking -->
+  <section class="charts-grid charts-grid--2col">
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <h3 class="chart-card__title">Asistencia por Supervisor</h3>
+        <p class="chart-card__subtitle">Programados vs Asistieron vs Ausentes</p>
+      </div>
+      <div class="chart-card__body">
+        <canvas id="chart-bar-supervisors"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <h3 class="chart-card__title">Ranking por Ausentismo</h3>
+        <p class="chart-card__subtitle">Mayor a menor % de ausencias</p>
+      </div>
+      <div class="chart-card__body">
+        <canvas id="chart-hbar"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHARTS ROW: Timeline -->
+  <section class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-card__header">
+        <h3 class="chart-card__title">Línea de Tiempo — Llegadas</h3>
+        <p class="chart-card__subtitle">Concentración de ingresos por franja horaria</p>
+      </div>
+      <div class="chart-card__body">
+        <canvas id="chart-timeline"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUPERVISOR TABLE -->
+  <section class="table-section">
+    <div class="table-section__header">
+      <div>
+        <h2 class="section-title">Resumen por Supervisor</h2>
+        <p class="section-subtitle">Ordenado por mayor ausentismo</p>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table" id="supervisor-table">
+        <thead>
+          <tr>
+            <th>Supervisor</th>
+            <th class="text-center">Programados</th>
+            <th class="text-center">Asistieron</th>
+            <th class="text-center">Ausentes</th>
+            <th class="text-center">Retardos</th>
+            <th class="text-center">% Ausentismo</th>
+            <th class="text-center">% Retardo</th>
+            <th class="text-center">% Asistencia</th>
+          </tr>
+        </thead>
+        <tbody id="supervisor-tbody">
+          <tr><td colspan="8" class="empty-row">Cargando datos…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ADVISOR DETAIL TABLE -->
+  <section class="table-section">
+    <div class="table-section__header">
+      <div>
+        <h2 class="section-title">Detalle de Asesores</h2>
+        <p class="section-subtitle" id="advisor-count">—</p>
+      </div>
+      <div class="table-controls">
+        <div class="search-group">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" id="search-name" placeholder="Buscar por nombre…" />
+        </div>
+        <div class="search-group">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" id="search-supervisor" placeholder="Buscar por supervisor…" />
+        </div>
+        <div class="export-group">
+          <button class="btn-export btn-export--excel" id="btn-export-excel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Excel
+          </button>
+          <button class="btn-export btn-export--csv" id="btn-export-csv">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            CSV
+          </button>
+        </div>
+        <div class="page-size-group">
+          <label class="filter-label" for="page-size">Filas</label>
+          <select class="filter-select filter-select--sm" id="page-size">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table data-table--sortable" id="advisor-table">
+        <thead>
+          <tr>
+            <th data-col="Nombre" class="sortable">Nombre <span class="sort-icon">↕</span></th>
+            <th data-col="Supervisor" class="sortable">Supervisor <span class="sort-icon">↕</span></th>
+            <th data-col="Campana" class="sortable">Campaña <span class="sort-icon">↕</span></th>
+            <th data-col="Hora_Programada" class="sortable text-center">H. Programada <span class="sort-icon">↕</span></th>
+            <th data-col="Hora_Inicio" class="sortable text-center">H. Inicio <span class="sort-icon">↕</span></th>
+            <th data-col="Tiempo_Retardo" class="sortable text-center">T. Retardo <span class="sort-icon">↕</span></th>
+            <th class="text-center">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="advisor-tbody">
+          <tr><td colspan="7" class="empty-row">Cargando datos…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="pagination">
+      <button class="page-btn" id="btn-first" title="Primera">«</button>
+      <button class="page-btn" id="btn-prev"  title="Anterior">‹</button>
+      <div class="page-info" id="page-info">Página 1 de 1</div>
+      <button class="page-btn" id="btn-next" title="Siguiente">›</button>
+      <button class="page-btn" id="btn-last" title="Última">»</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════  LOADING OVERLAY  ═══════════════ -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- ═══════════════  TOAST NOTIFICATION  ═══════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════  SCRIPTS  ═══════════════ -->
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<!-- SheetJS para exportar a Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Dashboard logic -->
+<script src="/static/js/dashboard.js"></script>
+
+</body>
+</html>
