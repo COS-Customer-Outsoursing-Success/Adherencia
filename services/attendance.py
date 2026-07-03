@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from database import execute_query
+import supabase_db
 from utils.formatters import td_to_str, safe_pct, hhmmss_to_minutes
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,21 @@ WHERE HC.Campana IN ({placeholders})
   AND HC.Cargo  = 'Asesor'
   AND SOUL.fecha_prog_ini_turn = CURDATE()
   AND SOUL.hora_prog_ini_turn  > 0
+"""
+
+
+_SNAPSHOT_SQL = """
+SELECT
+    nombre           AS "Nombre",
+    supervisor       AS "Supervisor",
+    campana          AS "Campana",
+    asiste           AS "Asiste",
+    ausente          AS "Ausente",
+    retardo          AS "Retardo",
+    hora_programada  AS "Hora_Programada",
+    hora_inicio      AS "Hora_Inicio",
+    tiempo_retardo   AS "Tiempo_Retardo"
+FROM attendance_snapshot
 """
 
 
@@ -95,6 +111,13 @@ def _apply_filters(rows: list[dict], filters: dict) -> list[dict]:
 # ── Funciones públicas ──────────────────────────────────────────────────────
 
 def get_raw_data(filters: dict | None = None) -> list[dict]:
+    """Datos de asistencia leídos desde Supabase (usado por la app Flask)."""
+    rows = supabase_db.execute_query(_SNAPSHOT_SQL)
+    return _apply_filters(rows, filters or {})
+
+
+def get_raw_data_from_mysql(filters: dict | None = None) -> list[dict]:
+    """Datos de asistencia leídos directo del MySQL corporativo (solo para el script de sync)."""
     sql, params = _build_query()
     rows = execute_query(sql, params)
     serialized = [_serialize_row(r) for r in rows]

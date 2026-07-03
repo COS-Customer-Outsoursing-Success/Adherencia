@@ -2,7 +2,7 @@ import logging
 
 from flask import Blueprint, jsonify, render_template, request
 
-from database import check_connection
+from supabase_db import check_connection
 from services.attendance import (
     get_filter_options,
     get_full_dashboard,
