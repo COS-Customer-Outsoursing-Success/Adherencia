@@ -112,6 +112,35 @@ body {
   margin-top: 1px;
 }
 
+.topbar__nav {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.nav-pill {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 12px;
+  padding: 8px 18px;
+  white-space: nowrap;
+  cursor: default;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.nav-pill:hover {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1px);
+}
+
 .topbar__meta {
   display: flex;
   align-items: center;
@@ -863,6 +892,10 @@ tr.aus-danger { border-left: 3px solid var(--claro-red);  }
   .charts-grid--2col { grid-template-columns: 1fr; }
   .panel-row { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .topbar__nav { display: none; }
 }
 
 @media (max-width: 768px) {

@@ -5,4 +5,5 @@ __pycache__/
 venv/
 .vercel/
 *.log
+sync_log.txt
 .claude/
