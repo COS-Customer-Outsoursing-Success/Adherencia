@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claro Ventas — Reporte de Excesos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════  TOP BAR  ═══════════════════════ -->
+<header class="topbar">
+  <div class="topbar__brand">
+    <div class="topbar__logo">
+      <span class="logo-claro">claro</span>
+    </div>
+    <div class="topbar__titles">
+      <h1 class="topbar__title">Reporte de Excesos</h1>
+      <p class="topbar__subtitle">Claro Ventas · Bogotá</p>
+    </div>
+  </div>
+  <nav class="topbar__nav">
+    <a class="nav-pill" href="/">Retardos-Ausentismo</a>
+    <a class="nav-pill nav-pill--active" href="/excesos">Excesos</a>
+    <a class="nav-pill" href="/detalle-agente">Detalle_Agente</a>
+  </nav>
+  <div class="topbar__meta">
+    <div class="meta-item" id="status-indicator">
+      <span class="status-dot status-dot--ok" id="status-dot"></span>
+      <span id="status-text">Conectado</span>
+    </div>
+    <div class="meta-item meta-item--sep"></div>
+    <div class="meta-item">
+      <span class="meta-label">Última actualización</span>
+      <span class="meta-value" id="last-update">—</span>
+    </div>
+    <button class="btn-refresh" id="btn-refresh" title="Actualizar ahora">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════  FILTERS  ═══════════════════════ -->
+<section class="filters-bar" id="filters-section">
+  <div class="filters-inner">
+    <div class="filter-group">
+      <label class="filter-label" for="f-supervisor">Supervisor</label>
+      <select class="filter-select" id="f-supervisor">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="f-campana">Campaña</label>
+      <select class="filter-select" id="f-campana">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="filter-group filter-group--checkbox">
+      <label class="filter-checkbox">
+        <input type="checkbox" id="f-solo-exceso" />
+        Solo con exceso
+      </label>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-filter-clear" id="btn-clear-filters">Limpiar filtros</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  MAIN CONTENT  ═══════════════════════ -->
+<main class="main-content">
+
+  <!-- KPI CARDS -->
+  <section class="kpi-grid">
+    <div class="kpi-card kpi-card--blue">
+      <div class="kpi-icon kpi-icon--blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-total-agentes">—</div>
+        <div class="kpi-label">Agentes</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--red">
+      <div class="kpi-icon kpi-icon--red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-con-exceso">—</div>
+        <div class="kpi-label">Con Exceso</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--red-pct">
+      <div class="kpi-icon kpi-icon--red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value kpi-value--pct" id="kpi-pct-exceso">—</div>
+        <div class="kpi-label">% Con Exceso</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--yellow">
+      <div class="kpi-icon kpi-icon--yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-exceso-alm">—</div>
+        <div class="kpi-label">Min. Exceso Almuerzo</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--yellow">
+      <div class="kpi-icon kpi-icon--yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-exceso-break">—</div>
+        <div class="kpi-label">Min. Exceso Break</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--yellow">
+      <div class="kpi-icon kpi-icon--yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M2 7h20v5H2z"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-exceso-bano">—</div>
+        <div class="kpi-label">Min. Exceso Baño</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--red-pct">
+      <div class="kpi-icon kpi-icon--red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-exceso-total">—</div>
+        <div class="kpi-label">Min. Exceso Total</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHART: Exceso por supervisor -->
+  <section class="charts-grid">
+    <div class="chart-card polar-card">
+      <div class="chart-card__header">
+        <h3 class="chart-card__title">Minutos de Exceso por Supervisor</h3>
+        <p class="chart-card__subtitle">Distribución radial · Almuerzo · Break · Baño</p>
+      </div>
+      <div class="polar-card__body">
+        <div class="polar-card__chart">
+          <canvas id="chart-polar-exceso" width="480" height="480"></canvas>
+          <div class="polar-center-label">
+            <span class="polar-center-label__value" id="polar-total-value">0</span>
+            <span class="polar-center-label__unit">min</span>
+            <span class="polar-center-label__caption">Exceso Total</span>
+          </div>
+          <div class="polar-tooltip" id="polar-tooltip"></div>
+        </div>
+        <div class="polar-card__side">
+          <div class="polar-legend">
+            <div class="polar-legend__item"><span class="polar-dot polar-dot--alm"></span> Almuerzo</div>
+            <div class="polar-legend__item"><span class="polar-dot polar-dot--break"></span> Break</div>
+            <div class="polar-legend__item"><span class="polar-dot polar-dot--bano"></span> Baño</div>
+          </div>
+          <div class="polar-ranking" id="polar-ranking"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUPERVISOR TABLE -->
+  <section class="table-section">
+    <div class="table-section__header">
+      <div>
+        <h2 class="section-title">Resumen por Supervisor</h2>
+        <p class="section-subtitle">Ordenado por mayor exceso total</p>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table" id="supervisor-table">
+        <thead>
+          <tr>
+            <th>Supervisor</th>
+            <th class="text-center">Agentes</th>
+            <th class="text-center">Con Exceso</th>
+            <th class="text-center">Min. Almuerzo</th>
+            <th class="text-center">Min. Break</th>
+            <th class="text-center">Min. Baño</th>
+            <th class="text-center">Min. Total</th>
+          </tr>
+        </thead>
+        <tbody id="supervisor-tbody">
+          <tr><td colspan="7" class="empty-row">Cargando datos…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- DETAIL TABLE -->
+  <section class="table-section">
+    <div class="table-section__header">
+      <div>
+        <h2 class="section-title">Detalle de Agentes</h2>
+        <p class="section-subtitle" id="agente-count">—</p>
+      </div>
+      <div class="table-controls">
+        <div class="search-group">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" id="search-name" placeholder="Buscar por nombre…" />
+        </div>
+        <div class="search-group">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" id="search-supervisor" placeholder="Buscar por supervisor…" />
+        </div>
+        <div class="export-group">
+          <button class="btn-export btn-export--excel" id="btn-export-excel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Excel
+          </button>
+          <button class="btn-export btn-export--csv" id="btn-export-csv">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            CSV
+          </button>
+        </div>
+        <div class="page-size-group">
+          <label class="filter-label" for="page-size">Filas</label>
+          <select class="filter-select filter-select--sm" id="page-size">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table data-table--sortable" id="agente-table">
+        <thead>
+          <tr>
+            <th data-col="Asesor" class="sortable">Asesor <span class="sort-icon">↕</span></th>
+            <th data-col="Supervisor" class="sortable">Supervisor <span class="sort-icon">↕</span></th>
+            <th data-col="Campana" class="sortable">Campaña <span class="sort-icon">↕</span></th>
+            <th data-col="T_login_seg" class="sortable text-center">T. Login <span class="sort-icon">↕</span></th>
+            <th data-col="T_Pantalla_Verde_seg" class="sortable text-center">T. Pantalla Verde <span class="sort-icon">↕</span></th>
+            <th data-col="T_dead_seg" class="sortable text-center">T. Dead <span class="sort-icon">↕</span></th>
+            <th data-col="T_preturno_seg" class="sortable text-center">T. Preturno <span class="sort-icon">↕</span></th>
+            <th data-col="T_capacitacion_seg" class="sortable text-center">T. Capacitación <span class="sort-icon">↕</span></th>
+            <th data-col="T_whatsapp_seg" class="sortable text-center">T. Whatsapp <span class="sort-icon">↕</span></th>
+            <th data-col="T_Exceso_Alm_seg" class="sortable text-center">Exceso Alm. <span class="sort-icon">↕</span></th>
+            <th data-col="T_Exceso_Break_seg" class="sortable text-center">Exceso Break <span class="sort-icon">↕</span></th>
+            <th data-col="T_Exceso_Bano_seg" class="sortable text-center">Exceso Baño <span class="sort-icon">↕</span></th>
+            <th data-col="T_Exceso_Total_seg" class="sortable text-center">Exceso Total <span class="sort-icon">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="agente-tbody">
+          <tr><td colspan="13" class="empty-row">Cargando datos…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="pagination">
+      <button class="page-btn" id="btn-first" title="Primera">«</button>
+      <button class="page-btn" id="btn-prev"  title="Anterior">‹</button>
+      <div class="page-info" id="page-info">Página 1 de 1</div>
+      <button class="page-btn" id="btn-next" title="Siguiente">›</button>
+      <button class="page-btn" id="btn-last" title="Última">»</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════  LOADING OVERLAY  ═══════════════ -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- ═══════════════  TOAST NOTIFICATION  ═══════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════  SCRIPTS  ═══════════════ -->
+<!-- Nota: la gráfica polar apilada se dibuja a mano con Canvas (excesos.js), no usa Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="/static/js/excesos.js"></script>
+
+</body>
+</html>

@@ -43,3 +43,15 @@ def hhmmss_to_minutes(value: str | None) -> float:
         return int(h) * 60 + int(m) + int(s) / 60
     except (ValueError, AttributeError):
         return 0.0
+
+
+def seconds_to_hhmmss(seconds: float | None) -> str:
+    """Convierte segundos (float/None) a string HH:MM:SS."""
+    if seconds is None:
+        return "00:00:00"
+    total = int(round(seconds))
+    if total < 0:
+        total = 0
+    h, rem = divmod(total, 3600)
+    m, s = divmod(rem, 60)
+    return f"{h:02d}:{m:02d}:{s:02d}"

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claro Ventas — Detalle de Agente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════  TOP BAR  ═══════════════════════ -->
+<header class="topbar">
+  <div class="topbar__brand">
+    <div class="topbar__logo">
+      <span class="logo-claro">claro</span>
+    </div>
+    <div class="topbar__titles">
+      <h1 class="topbar__title">Detalle de Productividad</h1>
+      <p class="topbar__subtitle">Claro Ventas · Bogotá</p>
+    </div>
+  </div>
+  <nav class="topbar__nav">
+    <a class="nav-pill" href="/">Retardos-Ausentismo</a>
+    <a class="nav-pill" href="/excesos">Excesos</a>
+    <a class="nav-pill nav-pill--active" href="/detalle-agente">Detalle_Agente</a>
+  </nav>
+  <div class="topbar__meta">
+    <div class="meta-item" id="status-indicator">
+      <span class="status-dot status-dot--ok" id="status-dot"></span>
+      <span id="status-text">Conectado</span>
+    </div>
+    <div class="meta-item meta-item--sep"></div>
+    <div class="meta-item">
+      <span class="meta-label">Última actualización</span>
+      <span class="meta-value" id="last-update">—</span>
+    </div>
+    <button class="btn-refresh" id="btn-refresh" title="Actualizar ahora">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════  FILTERS  ═══════════════════════ -->
+<section class="filters-bar" id="filters-section">
+  <div class="filters-inner">
+    <div class="filter-group">
+      <label class="filter-label" for="f-supervisor">Supervisor</label>
+      <select class="filter-select" id="f-supervisor">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="f-campana">Campaña</label>
+      <select class="filter-select" id="f-campana">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-filter-clear" id="btn-clear-filters">Limpiar filtros</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════  MAIN CONTENT  ═══════════════════════ -->
+<main class="main-content">
+
+  <!-- KPI CARDS -->
+  <section class="kpi-grid">
+    <div class="kpi-card kpi-card--blue">
+      <div class="kpi-icon kpi-icon--blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-total-agentes">—</div>
+        <div class="kpi-label">Agentes</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--blue">
+      <div class="kpi-icon kpi-icon--blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-total-llamadas">—</div>
+        <div class="kpi-label">Llamadas</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--green">
+      <div class="kpi-icon kpi-icon--green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-total-ventas">—</div>
+        <div class="kpi-label">Ventas (Inb+Out)</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--yellow">
+      <div class="kpi-icon kpi-icon--yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-aht-prom">—</div>
+        <div class="kpi-label">AHT Promedio</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--red">
+      <div class="kpi-icon kpi-icon--red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-total-desconex">—</div>
+        <div class="kpi-label">Desconexiones</div>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-card--red">
+      <div class="kpi-icon kpi-icon--red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-desconex-prom">—</div>
+        <div class="kpi-label">Desconexión Promedio</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAUGES -->
+  <section class="table-section gauge-section">
+    <div class="table-section__header">
+      <div>
+        <h2 class="section-title">Indicadores de Productividad</h2>
+        <p class="section-subtitle">Promedio del equipo filtrado</p>
+      </div>
+    </div>
+    <div class="gauge-grid">
+      <div class="gauge-card">
+        <canvas class="gauge-canvas" data-gauge="ocupacion" width="220" height="220"></canvas>
+        <div class="gauge-card__label">% Ocupación</div>
+      </div>
+      <div class="gauge-card">
+        <canvas class="gauge-canvas" data-gauge="disponibilidad" width="220" height="220"></canvas>
+        <div class="gauge-card__label">% Disponibilidad</div>
+      </div>
+      <div class="gauge-card">
+        <canvas class="gauge-canvas" data-gauge="pausa" width="220" height="220"></canvas>
+        <div class="gauge-card__label">% Pausa</div>
+      </div>
+      <div class="gauge-card">
+        <canvas class="gauge-canvas" data-gauge="eficiencia" width="220" height="220"></canvas>
+        <div class="gauge-card__label">% Eficiencia</div>
+      </div>
+      <div class="gauge-card">
+        <canvas class="gauge-canvas" data-gauge="utilizacion" width="220" height="220"></canvas>
+        <div class="gauge-card__label">% Utilización</div>
+      </div>
+      <div class="gauge-card">
+        <canvas class="gauge-canvas" data-gauge="shrinkage" width="220" height="220"></canvas>
+        <div class="gauge-card__label">% Shrinkage</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL TABLE -->
+  <section class="table-section">
+    <div class="table-section__header">
+      <div>
+        <h2 class="section-title">Detalle por Agente</h2>
+        <p class="section-subtitle" id="agente-count">—</p>
+      </div>
+      <div class="table-controls">
+        <div class="search-group">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" id="search-name" placeholder="Buscar por nombre…" />
+        </div>
+        <div class="search-group">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" type="text" id="search-supervisor" placeholder="Buscar por supervisor…" />
+        </div>
+        <div class="export-group">
+          <button class="btn-export btn-export--excel" id="btn-export-excel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Excel
+          </button>
+          <button class="btn-export btn-export--csv" id="btn-export-csv">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            CSV
+          </button>
+        </div>
+        <div class="page-size-group">
+          <label class="filter-label" for="page-size">Filas</label>
+          <select class="filter-select filter-select--sm" id="page-size">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table data-table--sortable" id="agente-table">
+        <thead>
+          <tr>
+            <th data-col="Asesor" class="sortable">Asesor <span class="sort-icon">↕</span></th>
+            <th data-col="Supervisor" class="sortable">Supervisor <span class="sort-icon">↕</span></th>
+            <th data-col="Campana" class="sortable">Campaña <span class="sort-icon">↕</span></th>
+            <th data-col="T_logueado_seg" class="sortable text-center">T. Logueado <span class="sort-icon">↕</span></th>
+            <th data-col="Llamadas" class="sortable text-center">Llamadas <span class="sort-icon">↕</span></th>
+            <th data-col="Llamadas_Inb" class="sortable text-center">Llam. Inb <span class="sort-icon">↕</span></th>
+            <th data-col="Llamadas_Out" class="sortable text-center">Llam. Out <span class="sort-icon">↕</span></th>
+            <th data-col="Ventas_Inb" class="sortable text-center">Ventas Inb <span class="sort-icon">↕</span></th>
+            <th data-col="Ventas_Out" class="sortable text-center">Ventas Out <span class="sort-icon">↕</span></th>
+            <th data-col="T_AHT_seg" class="sortable text-center">T. AHT <span class="sort-icon">↕</span></th>
+            <th data-col="T_ACW_seg" class="sortable text-center">T. ACW <span class="sort-icon">↕</span></th>
+            <th data-col="T_Espera_seg" class="sortable text-center">T. Espera <span class="sort-icon">↕</span></th>
+            <th data-col="T_Pausa_Produ_seg" class="sortable text-center">T. Pausa Prod. <span class="sort-icon">↕</span></th>
+            <th data-col="Cant_Desconex" class="sortable text-center">Cant. Desconex <span class="sort-icon">↕</span></th>
+            <th data-col="T_Desconex_seg" class="sortable text-center">T. Desconex <span class="sort-icon">↕</span></th>
+            <th data-col="Pct_Pausa" class="sortable text-center">% Pausa <span class="sort-icon">↕</span></th>
+            <th data-col="Pct_Ocupacion" class="sortable text-center">% Ocupación <span class="sort-icon">↕</span></th>
+            <th data-col="Pct_Disponibilidad" class="sortable text-center">% Disponibilidad <span class="sort-icon">↕</span></th>
+            <th data-col="Pct_Utilizacion" class="sortable text-center">% Utilización <span class="sort-icon">↕</span></th>
+            <th data-col="Pct_Shrinkage" class="sortable text-center">% Shrinkage <span class="sort-icon">↕</span></th>
+            <th data-col="Pct_Eficiencia" class="sortable text-center">% Eficiencia <span class="sort-icon">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="agente-tbody">
+          <tr><td colspan="20" class="empty-row">Cargando datos…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="pagination">
+      <button class="page-btn" id="btn-first" title="Primera">«</button>
+      <button class="page-btn" id="btn-prev"  title="Anterior">‹</button>
+      <div class="page-info" id="page-info">Página 1 de 1</div>
+      <button class="page-btn" id="btn-next" title="Siguiente">›</button>
+      <button class="page-btn" id="btn-last" title="Última">»</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════  LOADING OVERLAY  ═══════════════ -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- ═══════════════  TOAST NOTIFICATION  ═══════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════  SCRIPTS  ═══════════════ -->
+<!-- Los gauges se dibujan a mano con Canvas (detalle_agente.js), no usa Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="/static/js/detalle_agente.js"></script>
+
+</body>
+</html>

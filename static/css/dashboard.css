@@ -121,6 +121,9 @@ body {
 }
 
 .nav-pill {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
   -webkit-backdrop-filter: blur(8px);
@@ -139,6 +142,11 @@ body {
 .nav-pill:hover {
   background: rgba(255, 255, 255, 0.24);
   transform: translateY(-1px);
+}
+
+.nav-pill--active {
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.55);
 }
 
 .topbar__meta {
@@ -292,6 +300,25 @@ body {
 .filter-time-sep { color: var(--gray-500); font-size: 0.85rem; }
 
 .filter-actions { display: flex; align-items: flex-end; gap: 8px; }
+
+.filter-group--checkbox { justify-content: flex-end; }
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+
+.filter-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--claro-red);
+  cursor: pointer;
+}
 
 .btn-filter-clear {
   height: 36px;
@@ -721,8 +748,8 @@ body {
 
 .data-table thead th {
   background: var(--gray-50);
-  color: var(--gray-600);
-  font-weight: 600;
+  color: var(--gray-800);
+  font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.4px;
@@ -781,6 +808,231 @@ body {
 .badge--green  { background: var(--green-bg);       color: var(--green);    }
 .badge--red    { background: var(--claro-red-10);   color: var(--claro-red);}
 .badge--yellow { background: var(--yellow-bg);      color: var(--yellow);   }
+
+/* Badges de tiempo con formato condicional (reporte de Excesos) */
+.badge-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 22px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-time--neutral { background: var(--gray-100);   color: var(--gray-700); }
+.badge-time--ok       { background: var(--green-bg);   color: var(--green);    }
+.badge-time--warn     { background: var(--yellow-bg);  color: var(--yellow);   }
+.badge-time--danger   { background: var(--claro-red-10); color: var(--claro-red); }
+
+/* ══════════════════════════  POLAR CHART (Excesos)  ══════════════════════════ */
+.polar-card { overflow: visible; }
+
+.polar-card__body {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 24px 28px 28px;
+}
+
+.polar-card__chart {
+  flex: 0 0 58%;
+  max-width: 58%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.polar-card__chart canvas {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  cursor: default;
+}
+
+.polar-center-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.polar-center-label__value {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--gray-900);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.polar-center-label__unit {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  font-weight: 600;
+}
+
+.polar-center-label__caption {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--gray-500);
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+.polar-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--gray-900);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.12s ease;
+  white-space: nowrap;
+  z-index: 20;
+}
+
+.polar-tooltip.show { opacity: 1; }
+.polar-tooltip strong { color: #fff; }
+
+.polar-card__side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.polar-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--gray-150);
+}
+
+.polar-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.polar-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.polar-dot--alm   { background: var(--polar-alm, #1565C0); }
+.polar-dot--break { background: var(--polar-break, #F57C00); }
+.polar-dot--bano  { background: var(--polar-bano, #DA291C); }
+
+.polar-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.polar-ranking__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--gray-50);
+  transition: background var(--transition);
+}
+
+.polar-ranking__row:hover { background: var(--gray-100); }
+
+.polar-ranking__rank {
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.polar-ranking__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.polar-ranking__value {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--claro-red);
+  font-family: 'Courier New', Courier, monospace;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .polar-card__body { flex-direction: column; }
+  .polar-card__chart { flex: 1 1 auto; max-width: 100%; }
+  .polar-card__side  { flex: 1 1 auto; width: 100%; }
+}
+
+/* ══════════════════════════  GAUGES (Detalle de Agente)  ══════════════════════════ */
+.gauge-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  padding: 8px 22px 22px;
+}
+
+.gauge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.gauge-canvas {
+  width: 100%;
+  max-width: 170px;
+  height: auto;
+}
+
+.gauge-card__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  text-align: center;
+}
+
+@media (max-width: 1300px) {
+  .gauge-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .gauge-grid { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* Supervisor ausentismo color coding */
 tr.aus-ok     td:nth-child(6) { color: var(--green);     font-weight: 600; }
