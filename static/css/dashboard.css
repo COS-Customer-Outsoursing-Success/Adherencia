@@ -355,6 +355,8 @@ body {
   gap: 16px;
 }
 
+.kpi-grid--6col { grid-template-columns: repeat(6, 1fr); }
+
 .kpi-card {
   background: var(--white);
   border-radius: var(--radius);
