@@ -171,19 +171,38 @@ def get_supervisor_summary(data: list[dict] | None = None) -> list[dict]:
 
 
 def get_timeline(data: list[dict] | None = None) -> dict:
+    """Agrupa las llegadas en intervalos fijos de 30 minutos (rellenando con 0
+    los intervalos sin llegadas, para que la línea de tiempo sea continua)."""
     if data is None:
         data = get_raw_data()
+
     buckets: dict[str, int] = {}
     for r in data:
         hora = r.get("Hora_Inicio")
         if hora and hora != "00:00:00":
-            hhmm = hora[:5]
+            h, m = hora[:5].split(":")
+            bucket_min = (int(m) // 30) * 30
+            hhmm = f"{int(h):02d}:{bucket_min:02d}"
             buckets[hhmm] = buckets.get(hhmm, 0) + 1
-    sorted_items = sorted(buckets.items())
-    return {
-        "labels": [i[0] for i in sorted_items],
-        "values": [i[1] for i in sorted_items],
-    }
+
+    if not buckets:
+        return {"labels": [], "values": []}
+
+    keys = sorted(buckets.keys())
+    start_h, start_m = (int(x) for x in keys[0].split(":"))
+    end_h, end_m = (int(x) for x in keys[-1].split(":"))
+    start_total = start_h * 60 + start_m
+    end_total = end_h * 60 + end_m
+
+    labels: list[str] = []
+    values: list[int] = []
+    for total_min in range(start_total, end_total + 1, 30):
+        hh, mm = divmod(total_min, 60)
+        label = f"{hh:02d}:{mm:02d}"
+        labels.append(label)
+        values.append(buckets.get(label, 0))
+
+    return {"labels": labels, "values": values}
 
 
 def get_ausentismo(data: list[dict] | None = None) -> dict:
