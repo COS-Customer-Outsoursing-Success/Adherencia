@@ -463,9 +463,9 @@ function renderSupervisorTable(supervisors) {
         <td class="text-center">${s.asistieron}</td>
         <td class="text-center">${s.ausentes}</td>
         <td class="text-center">${s.retardos}</td>
-        <td class="text-center">${s.pct_ausentismo}%</td>
-        <td class="text-center">${s.pct_retardo}%</td>
-        <td class="text-center">${s.pct_asistencia}%</td>
+        <td class="text-center">${pctBadge(s.pct_ausentismo, 5, 10)}</td>
+        <td class="text-center">${pctBadge(s.pct_retardo, 8, 15)}</td>
+        <td class="text-center">${pctBadge(s.pct_asistencia, 80, 60, true)}</td>
       </tr>`;
   }).join('');
 }
@@ -498,9 +498,9 @@ function renderAusentismoTable(list) {
   }
   tbody.innerHTML = list.map(r => `
     <tr>
-      <td>${esc(r.Nombre || '—')}</td>
+      <td><strong>${esc(r.Nombre || '—')}</strong></td>
       <td>${esc(r.Supervisor || '—')}</td>
-      <td class="text-center mono">${r.Hora_Programada || '—'}</td>
+      <td class="text-center">${neutralBadge(r.Hora_Programada || '—')}</td>
     </tr>`).join('');
 }
 
@@ -573,11 +573,11 @@ function renderRetardosTable(list) {
   }
   tbody.innerHTML = list.map(r => `
     <tr>
-      <td>${esc(r.Nombre || '—')}</td>
+      <td><strong>${esc(r.Nombre || '—')}</strong></td>
       <td>${esc(r.Supervisor || '—')}</td>
-      <td class="text-center mono">${r.Hora_Programada || '—'}</td>
-      <td class="text-center mono">${r.Hora_Inicio || '—'}</td>
-      <td class="text-center mono">${r.Tiempo_Retardo || '—'}</td>
+      <td class="text-center">${neutralBadge(r.Hora_Programada || '—')}</td>
+      <td class="text-center">${neutralBadge(r.Hora_Inicio || '—')}</td>
+      <td class="text-center">${timeBadge((r.Tiempo_Retardo_Min || 0) * 60, r.Tiempo_Retardo || '—', 300, 900)}</td>
     </tr>`).join('');
 }
 
@@ -680,14 +680,18 @@ function renderAdvisorTable() {
 
   tbody.innerHTML = slice.map(r => {
     const badge = getStatusBadge(r);
+    const tieneRetardo = r.Tiempo_Retardo && r.Tiempo_Retardo !== '00:00:00';
+    const retardoCell = tieneRetardo
+      ? timeBadge(hhmmssToSeconds(r.Tiempo_Retardo), r.Tiempo_Retardo, 300, 900)
+      : neutralBadge('—');
     return `
       <tr>
-        <td>${esc(r.Nombre  || '—')}</td>
+        <td><strong>${esc(r.Nombre  || '—')}</strong></td>
         <td>${esc(r.Supervisor || '—')}</td>
         <td><span style="font-size:0.78rem;color:#757575">${esc(r.Campana || '—')}</span></td>
-        <td class="text-center mono">${r.Hora_Programada || '—'}</td>
-        <td class="text-center mono">${r.Hora_Inicio && r.Hora_Inicio !== '00:00:00' ? r.Hora_Inicio : '—'}</td>
-        <td class="text-center mono">${r.Tiempo_Retardo && r.Tiempo_Retardo !== '00:00:00' ? r.Tiempo_Retardo : '—'}</td>
+        <td class="text-center">${neutralBadge(r.Hora_Programada || '—')}</td>
+        <td class="text-center">${neutralBadge(r.Hora_Inicio && r.Hora_Inicio !== '00:00:00' ? r.Hora_Inicio : '—')}</td>
+        <td class="text-center">${retardoCell}</td>
         <td class="text-center">${badge}</td>
       </tr>`;
   }).join('');
@@ -880,6 +884,37 @@ function pct(n, d) {
 
 function truncate(str, len) {
   return str && str.length > len ? str.slice(0, len) + '…' : str;
+}
+
+// ── Formato condicional (badges de color + icono) ────────────────────────
+
+function hhmmssToSeconds(str) {
+  if (!str) return 0;
+  const parts = str.split(':').map(Number);
+  const [h = 0, m = 0, s = 0] = parts;
+  return (h * 3600) + (m * 60) + s;
+}
+
+function timeBadge(seconds, str, warnAt, dangerAt) {
+  let level = 'ok', icon = '✅';
+  if (seconds > dangerAt) { level = 'danger'; icon = '🔴'; }
+  else if (seconds > warnAt) { level = 'warn'; icon = '🟡'; }
+  return `<span class="badge-time badge-time--${level}">${icon} ${str}</span>`;
+}
+
+function neutralBadge(str) {
+  return `<span class="badge-time badge-time--neutral">${str}</span>`;
+}
+
+function pctBadge(value, warnAt, dangerAt, inverse) {
+  let level;
+  if (inverse) {
+    level = value < dangerAt ? 'danger' : value < warnAt ? 'warn' : 'ok';
+  } else {
+    level = value > dangerAt ? 'danger' : value >= warnAt ? 'warn' : 'ok';
+  }
+  const icon = level === 'danger' ? '🔴' : level === 'warn' ? '🟡' : '✅';
+  return `<span class="badge-time badge-time--${level}">${icon} ${value}%</span>`;
 }
 
 function dateStamp() {

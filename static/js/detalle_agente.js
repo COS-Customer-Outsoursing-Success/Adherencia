@@ -316,24 +316,24 @@ function renderAgenteTable() {
       <td><strong>${esc(r.Asesor || '—')}</strong></td>
       <td>${esc(r.Supervisor || '—')}</td>
       <td><span style="font-size:0.78rem;color:#757575">${esc(r.Campana || '—')}</span></td>
-      <td class="text-center mono">${r.T_logueado}</td>
+      <td class="text-center">${neutralBadge(r.T_logueado)}</td>
       <td class="text-center">${r.Llamadas}</td>
       <td class="text-center">${r.Llamadas_Inb}</td>
       <td class="text-center">${r.Llamadas_Out}</td>
       <td class="text-center">${r.Ventas_Inb}</td>
       <td class="text-center">${r.Ventas_Out}</td>
-      <td class="text-center mono">${r.T_AHT}</td>
-      <td class="text-center mono">${r.T_ACW}</td>
-      <td class="text-center mono">${r.T_Espera}</td>
-      <td class="text-center mono">${r.T_Pausa_Produ}</td>
-      <td class="text-center">${r.Cant_Desconex}</td>
-      <td class="text-center mono">${r.T_Desconex}</td>
-      <td class="text-center">${r.Pct_Pausa}%</td>
-      <td class="text-center">${r.Pct_Ocupacion}%</td>
-      <td class="text-center">${r.Pct_Disponibilidad}%</td>
-      <td class="text-center">${r.Pct_Utilizacion}%</td>
-      <td class="text-center">${r.Pct_Shrinkage}%</td>
-      <td class="text-center">${r.Pct_Eficiencia}%</td>
+      <td class="text-center">${neutralBadge(r.T_AHT)}</td>
+      <td class="text-center">${neutralBadge(r.T_ACW)}</td>
+      <td class="text-center">${neutralBadge(r.T_Espera)}</td>
+      <td class="text-center">${neutralBadge(r.T_Pausa_Produ)}</td>
+      <td class="text-center">${countBadge(r.Cant_Desconex, 0, 3)}</td>
+      <td class="text-center">${neutralBadge(r.T_Desconex)}</td>
+      <td class="text-center">${pctBadge(r.Pct_Pausa, 20, 35)}</td>
+      <td class="text-center">${pctBadge(r.Pct_Ocupacion, 70, 50, true)}</td>
+      <td class="text-center">${pctBadge(r.Pct_Disponibilidad, 20, 40)}</td>
+      <td class="text-center">${pctBadge(r.Pct_Utilizacion, 70, 50, true)}</td>
+      <td class="text-center">${pctBadge(r.Pct_Shrinkage, 20, 35)}</td>
+      <td class="text-center">${pctBadge(r.Pct_Eficiencia, 60, 40, true)}</td>
     </tr>`).join('');
 
   renderPagination(filtered.length, page, pageSize);
@@ -466,6 +466,29 @@ function csvCell(val) {
 
 function round1(n) {
   return Math.round(n * 10) / 10;
+}
+
+// ── Formato condicional (badges de color + icono) ────────────────────────
+
+function neutralBadge(str) {
+  return `<span class="badge-time badge-time--neutral">${str}</span>`;
+}
+
+function pctBadge(value, warnAt, dangerAt, inverse) {
+  let level;
+  if (inverse) {
+    level = value < dangerAt ? 'danger' : value < warnAt ? 'warn' : 'ok';
+  } else {
+    level = value > dangerAt ? 'danger' : value >= warnAt ? 'warn' : 'ok';
+  }
+  const icon = level === 'danger' ? '🔴' : level === 'warn' ? '🟡' : '✅';
+  return `<span class="badge-time badge-time--${level}">${icon} ${value}%</span>`;
+}
+
+function countBadge(n, warnAt, dangerAt) {
+  const level = n > dangerAt ? 'danger' : n > warnAt ? 'warn' : 'ok';
+  const icon = level === 'danger' ? '🔴' : level === 'warn' ? '🟡' : '✅';
+  return `<span class="badge-time badge-time--${level}"><strong>${icon} ${n}</strong></span>`;
 }
 
 function dateStamp() {
