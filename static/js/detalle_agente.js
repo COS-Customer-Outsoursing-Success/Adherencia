@@ -63,6 +63,14 @@ function setupEventListeners() {
     renderAgenteTable();
   });
 
+  document.querySelectorAll('#view-toggle .view-toggle__btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#view-toggle .view-toggle__btn').forEach(b => b.classList.remove('view-toggle__btn--active'));
+      btn.classList.add('view-toggle__btn--active');
+      document.getElementById('agente-table').classList.toggle('mode-summary', btn.dataset.mode === 'summary');
+    });
+  });
+
   document.getElementById('btn-first').addEventListener('click', () => goToPage(1));
   document.getElementById('btn-prev').addEventListener('click',  () => goToPage(state.agente.page - 1));
   document.getElementById('btn-next').addEventListener('click',  () => goToPage(state.agente.page + 1));
@@ -173,6 +181,7 @@ function clearFilters() {
 function updateAll(data) {
   updateKPIs(data.kpis);
   updateGauges(data.kpis);
+  renderRankings(data.agentes || []);
 
   state.agente.data = data.agentes || [];
   applyAgenteFilters();
@@ -180,6 +189,40 @@ function updateAll(data) {
 
   const el = document.getElementById('last-update');
   if (el) el.textContent = data.last_update || '—';
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// RANKINGS — quiénes necesitan más atención, de un vistazo
+// ════════════════════════════════════════════════════════════════════════
+
+function renderRankings(agentes) {
+  renderRankPanel('rank-eficiencia', agentes, 'Pct_Eficiencia', 'asc',  v => `${v}%`);
+  renderRankPanel('rank-shrinkage',  agentes, 'Pct_Shrinkage',  'desc', v => `${v}%`);
+  renderRankPanel('rank-aht',        agentes, 'T_AHT_seg',      'desc', (v, r) => r.T_AHT);
+}
+
+function renderRankPanel(elId, agentes, field, dir, formatValue, topN = 5) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!agentes.length) {
+    el.innerHTML = '<p class="empty-row">Sin datos</p>';
+    return;
+  }
+
+  const sorted = [...agentes].sort((a, b) => dir === 'asc' ? a[field] - b[field] : b[field] - a[field]);
+  const top = sorted.slice(0, topN);
+  const maxVal = Math.max(...top.map(r => r[field]), 1);
+
+  el.innerHTML = top.map(r => {
+    const value = r[field];
+    const widthPct = Math.max(4, Math.round((value / maxVal) * 100));
+    return `
+      <div class="rank-row">
+        <span class="rank-name" title="${esc(r.Asesor)}">${esc(r.Asesor)}</span>
+        <div class="rank-bar"><div class="rank-bar__fill" style="width:${widthPct}%"></div></div>
+        <span class="rank-value">${formatValue(value, r)}</span>
+      </div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -303,7 +346,7 @@ function renderAgenteTable() {
   const { filtered, page, pageSize } = state.agente;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="20" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="21" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
     renderPagination(0, page, pageSize);
     return;
   }

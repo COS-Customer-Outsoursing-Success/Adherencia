@@ -166,6 +166,30 @@
     </div>
   </section>
 
+  <!-- RANKINGS -->
+  <section class="table-section">
+    <div class="table-section__header">
+      <div>
+        <h2 class="section-title">Rankings de Agentes</h2>
+        <p class="section-subtitle">Los que más necesitan atención, de un vistazo</p>
+      </div>
+    </div>
+    <div class="rank-grid">
+      <div class="rank-panel">
+        <h3 class="rank-panel__title">🔴 Menor % Eficiencia</h3>
+        <div class="rank-list" id="rank-eficiencia"></div>
+      </div>
+      <div class="rank-panel">
+        <h3 class="rank-panel__title">🔴 Mayor % Shrinkage</h3>
+        <div class="rank-list" id="rank-shrinkage"></div>
+      </div>
+      <div class="rank-panel">
+        <h3 class="rank-panel__title">🔴 Mayor AHT</h3>
+        <div class="rank-list" id="rank-aht"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- DETAIL TABLE -->
   <section class="table-section">
     <div class="table-section__header">
@@ -174,6 +198,10 @@
         <p class="section-subtitle" id="agente-count">—</p>
       </div>
       <div class="table-controls">
+        <div class="view-toggle" id="view-toggle">
+          <button class="view-toggle__btn view-toggle__btn--active" data-mode="summary" id="btn-view-summary">Vista resumida</button>
+          <button class="view-toggle__btn" data-mode="full" id="btn-view-full">Vista completa</button>
+        </div>
         <div class="search-group">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input class="search-input" type="text" id="search-name" placeholder="Buscar por nombre…" />
@@ -205,8 +233,39 @@
     </div>
 
     <div class="table-wrapper">
-      <table class="data-table data-table--sortable" id="agente-table">
+      <table class="data-table data-table--sortable data-table--roomy data-table--zebra data-table--sticky-first mode-summary" id="agente-table">
+        <colgroup>
+          <col>
+          <col>
+          <col class="col-detail">
+          <col class="col-detail">
+          <col>
+          <col class="col-detail">
+          <col class="col-detail">
+          <col class="col-detail">
+          <col class="col-detail">
+          <col>
+          <col class="col-detail">
+          <col class="col-detail">
+          <col class="col-detail">
+          <col class="col-detail">
+          <col class="col-detail">
+          <col class="col-detail">
+          <col>
+          <col class="col-detail">
+          <col class="col-detail">
+          <col>
+          <col>
+        </colgroup>
         <thead>
+          <tr class="group-header">
+            <th colspan="3">Identificación</th>
+            <th colspan="1">Actividad</th>
+            <th colspan="3">Llamadas</th>
+            <th colspan="2">Ventas</th>
+            <th colspan="6">Tiempos</th>
+            <th colspan="6">Indicadores %</th>
+          </tr>
           <tr>
             <th data-col="Asesor" class="sortable">Asesor <span class="sort-icon">↕</span></th>
             <th data-col="Supervisor" class="sortable">Supervisor <span class="sort-icon">↕</span></th>
@@ -232,7 +291,7 @@
           </tr>
         </thead>
         <tbody id="agente-tbody">
-          <tr><td colspan="20" class="empty-row">Cargando datos…</td></tr>
+          <tr><td colspan="21" class="empty-row">Cargando datos…</td></tr>
         </tbody>
       </table>
     </div>

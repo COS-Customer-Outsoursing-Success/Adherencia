@@ -785,6 +785,143 @@ body {
 .sortable.sort-desc .sort-icon::before { content: '↓'; }
 .sortable .sort-icon::before { content: '↕'; }
 
+/* Tabla con más aire entre celdas */
+.data-table--roomy th,
+.data-table--roomy td { padding: 13px 16px; }
+
+/* Rayado alterno */
+.data-table--zebra tbody tr:nth-child(even) { background: var(--gray-50); }
+.data-table--zebra tbody tr:nth-child(even):hover { background: var(--gray-100); }
+
+/* Primera columna fija al hacer scroll horizontal */
+.data-table--sticky-first th:first-child,
+.data-table--sticky-first td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: var(--white);
+  box-shadow: 2px 0 4px rgba(0,0,0,0.04);
+}
+.data-table--sticky-first.data-table--zebra tbody tr:nth-child(even) td:first-child { background: var(--gray-50); }
+.data-table--sticky-first tbody tr:hover td:first-child { background: var(--gray-100); }
+.data-table--sticky-first thead tr.group-header th:first-child { z-index: 4; }
+
+/* Encabezado agrupado por tema */
+.data-table thead tr.group-header th {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  font-size: 0.68rem;
+  padding: 6px 14px;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+/* Separadores verticales entre grupos de columnas (Detalle de Agente) */
+#agente-table th:nth-child(3), #agente-table td:nth-child(3),
+#agente-table th:nth-child(4), #agente-table td:nth-child(4),
+#agente-table th:nth-child(7), #agente-table td:nth-child(7),
+#agente-table th:nth-child(9), #agente-table td:nth-child(9),
+#agente-table th:nth-child(15), #agente-table td:nth-child(15) {
+  border-right: 1px solid var(--gray-200);
+}
+
+/* Columnas ocultas en vista resumida */
+#agente-table.mode-summary col.col-detail { visibility: collapse; }
+
+/* Toggle Vista resumida / completa */
+.view-toggle {
+  display: flex;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.view-toggle__btn {
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  background: var(--white);
+  font-family: var(--font);
+  font-size: 0.82rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.view-toggle__btn--active {
+  background: var(--claro-red);
+  color: var(--white);
+  font-weight: 600;
+}
+
+.view-toggle__btn:not(.view-toggle__btn--active):hover { background: var(--gray-100); }
+
+/* ══════════════════════════  RANKINGS (Detalle de Agente)  ══════════════════════════ */
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  padding: 16px 22px 24px;
+}
+
+.rank-panel__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 12px;
+}
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.rank-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 58px;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-bar {
+  position: relative;
+  height: 16px;
+  background: var(--gray-100);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rank-bar__fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--claro-light-red), var(--claro-red));
+  border-radius: 8px;
+  transition: width 0.6s ease;
+}
+
+.rank-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--claro-red);
+  text-align: right;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+@media (max-width: 1300px) {
+  .rank-grid { grid-template-columns: 1fr; }
+}
+
 /* Empty / loading state */
 .empty-row {
   text-align: center;
