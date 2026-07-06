@@ -19,6 +19,12 @@ class Config:
     SUPABASE_DB_USER = os.getenv("SUPABASE_DB_USER", "postgres")
     SUPABASE_DB_PASSWORD = os.getenv("SUPABASE_DB_PASSWORD", "")
 
+    # ── Supabase REST API (usada solo por sync_to_supabase.py cuando el puerto
+    #    Postgres directo está bloqueado por la red local; viaja por HTTPS 443) ──
+    SUPABASE_PROJECT_REF = os.getenv("SUPABASE_PROJECT_REF", "gsxxglrjzmljbkfmgdnx")
+    SUPABASE_URL = os.getenv("SUPABASE_URL", f"https://{SUPABASE_PROJECT_REF}.supabase.co")
+    SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
     # ── Aplicación ─────────────────────────────────────────────────────────
     HOST = os.getenv("APP_HOST", "0.0.0.0")
     PORT = int(os.getenv("APP_PORT", "5000"))
