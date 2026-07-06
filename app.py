@@ -1,10 +1,11 @@
 import logging
 import sys
 
-from flask import Flask
+from flask import Flask, request
 
 from config import Config
 from routes import register_routes
+from utils.device_guard import BLOCKED_PAGE_HTML, is_mobile_request
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,6 +19,14 @@ def create_app() -> Flask:
     app.secret_key = Config.SECRET_KEY
 
     register_routes(app)
+
+    @app.before_request
+    def block_mobile_devices():
+        if request.path.startswith("/static/"):
+            return None
+        if is_mobile_request():
+            return BLOCKED_PAGE_HTML, 403
+
     return app
 
 
