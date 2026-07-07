@@ -36,6 +36,13 @@ def sync_attendance() -> int:
     rows = get_raw_data_from_mysql()
     logger.info("%d filas obtenidas de MySQL (asistencia)", len(rows))
 
+    if not rows:
+        logger.warning(
+            "MySQL devolvió 0 filas de asistencia. No se toca Supabase "
+            "(se conservan los últimos datos válidos en vez de vaciar la tabla)."
+        )
+        return 0
+
     payload = [
         {
             "nombre": r.get("Nombre"),
@@ -60,6 +67,14 @@ def sync_agent_metrics() -> int:
     logger.info("Consultando métricas de agentes frescas del MySQL corporativo...")
     rows = execute_query(AGENT_METRICS_SQL)
     logger.info("%d filas obtenidas de MySQL (agent_metrics)", len(rows))
+
+    if not rows:
+        logger.warning(
+            "MySQL devolvió 0 filas de agent_metrics (probablemente la tabla fuente "
+            "tb_detalle_agente_daily_new_dts no se ha cargado hoy todavía). "
+            "No se toca Supabase, se conservan los últimos datos válidos."
+        )
+        return 0
 
     payload = [
         {
