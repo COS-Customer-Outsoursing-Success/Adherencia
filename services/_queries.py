@@ -45,17 +45,6 @@ WITH base_login_logout AS (
         event,
         event_date,
         fecha
-    FROM bbdd_bigdata_login_logout_vicidial.tb_login_logout_vicidial_fidelizacion
-    WHERE event IN ('LOGIN', 'LOGOUT')
-      AND fecha = CURDATE()
-
-    UNION ALL
-
-    SELECT
-        user,
-        event,
-        event_date,
-        fecha
     FROM bbdd_bigdata_login_logout_vicidial.tb_login_logout_vicidial_claro_terminales_tecnologia
     WHERE event IN ('LOGIN', 'LOGOUT')
       AND fecha = CURDATE()
@@ -124,14 +113,6 @@ mrc_inbound AS (
         SELECT user COLLATE utf8mb4_unicode_ci AS user,
                call_date,
                status_name COLLATE utf8mb4_unicode_ci AS status_name
-        FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_inb_fideliza_movil
-        WHERE call_date >= CURDATE()
-
-        UNION ALL
-
-        SELECT user COLLATE utf8mb4_unicode_ci AS user,
-               call_date,
-               status_name COLLATE utf8mb4_unicode_ci AS status_name
         FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_inb_tmk_bog
         WHERE call_date >= CURDATE()
     ) AS union_inb
@@ -149,14 +130,6 @@ mrc_outbound AS (
                call_date,
                status_name COLLATE utf8mb4_unicode_ci AS status_name
         FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_out_claro_terminales_tecnologia
-        WHERE call_date >= CURDATE()
-
-        UNION ALL
-
-        SELECT user COLLATE utf8mb4_unicode_ci AS user,
-               call_date,
-               status_name COLLATE utf8mb4_unicode_ci AS status_name
-        FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_out_fidelizacion
         WHERE call_date >= CURDATE()
 
         UNION ALL
