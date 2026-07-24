@@ -50,7 +50,7 @@ def _mock_raw_rows() -> list[dict]:
             "T_capacitacion": _seconds_frac(rng.uniform(0, 30) * 60),
             "T_whatsapp": _seconds_frac(rng.uniform(0, 15) * 60),
             "T_almuerzo": _seconds_frac(t_almuerzo),
-            "T_Exceso_Alm": _seconds_frac(max(0, t_almuerzo - 45 * 60)),
+            "T_Exceso_Alm": _seconds_frac(max(0, t_almuerzo - 40 * 60)),
             "T_Exceso_Break": _seconds_frac(max(0, t_break - 20 * 60)),
             "T_Exceso_Bano": _seconds_frac(max(0, t_bano - 15 * 60)),
         })
@@ -72,7 +72,10 @@ def _build_row(r: dict) -> dict:
     t_exceso_alm_seg = _day_frac_to_seconds(r.get("T_Exceso_Alm"))
     t_exceso_break_seg = _day_frac_to_seconds(r.get("T_Exceso_Break"))
     t_exceso_bano_seg = _day_frac_to_seconds(r.get("T_Exceso_Bano"))
-    t_exceso_total_seg = t_exceso_alm_seg + t_exceso_break_seg + t_exceso_bano_seg
+    t_exceso_total_seg = (
+        t_exceso_alm_seg + t_exceso_break_seg + t_exceso_bano_seg
+        + t_dead_seg + t_pantalla_verde_seg
+    )
 
     return {
         "Asesor": r.get("Nombres_Apellidos"),
@@ -150,7 +153,7 @@ def get_kpis(data: list[dict] | None = None) -> dict:
     total_alm_seg = sum(r["T_Exceso_Alm_seg"] for r in data)
     total_break_seg = sum(r["T_Exceso_Break_seg"] for r in data)
     total_bano_seg = sum(r["T_Exceso_Bano_seg"] for r in data)
-    total_exceso_seg = total_alm_seg + total_break_seg + total_bano_seg
+    total_exceso_seg = sum(r["T_Exceso_Total_seg"] for r in data)
     return {
         "total_agentes": total_agentes,
         "agentes_con_exceso": con_exceso,

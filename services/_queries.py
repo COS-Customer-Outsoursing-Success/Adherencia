@@ -215,8 +215,8 @@ SELECT
             IF(T_bano > SOUL.T_Programado_Bano, T_bano - SOUL.T_Programado_Bano, 0)
         )) / NULLIF(SOUL.T_Programado_Turno, 0)) * 100, 2
     ) AS Conexion_Porcen,
-    CASE WHEN DEA.T_almuerzo > SOUL.T_Programado_Almuerzo
-    THEN (DEA.T_almuerzo - SOUL.T_Programado_Almuerzo)/86400 ELSE 0
+    CASE WHEN DEA.T_almuerzo > 2400
+    THEN (DEA.T_almuerzo - 2400)/86400 ELSE 0
     END AS T_Exceso_Alm,
     CASE WHEN DEA.T_break > 1200
     THEN (DEA.T_break - 1200)/86400 ELSE 0
