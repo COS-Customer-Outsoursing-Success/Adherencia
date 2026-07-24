@@ -370,7 +370,7 @@ function renderAgenteTable() {
       <td class="text-center">${neutralBadge(r.T_Espera)}</td>
       <td class="text-center">${neutralBadge(r.T_Pausa_Produ)}</td>
       <td class="text-center">${countBadge(r.Cant_Desconex, 0, 3)}</td>
-      <td class="text-center">${neutralBadge(r.T_Desconex)}</td>
+      <td class="text-center">${timeDangerIfPositive(r.T_Desconex, r.T_Desconex_seg)}</td>
       <td class="text-center">${pctBadge(r.Pct_Pausa, 20, 35)}</td>
       <td class="text-center">${pctBadge(r.Pct_Ocupacion, 70, 50, true)}</td>
       <td class="text-center">${pctBadge(r.Pct_Disponibilidad, 20, 40)}</td>
@@ -515,6 +515,11 @@ function round1(n) {
 
 function neutralBadge(str) {
   return `<span class="badge-time badge-time--neutral">${str}</span>`;
+}
+
+function timeDangerIfPositive(str, seconds) {
+  const level = seconds > 0 ? 'danger' : 'neutral';
+  return `<span class="badge-time badge-time--${level}">${str}</span>`;
 }
 
 function pctBadge(value, warnAt, dangerAt, inverse) {
