@@ -39,7 +39,7 @@ SELECT
         TIMEDIFF(SOUL.Hora_Log_Ini_Turn, SOUL.Hora_Prog_Ini_Turn),
         MAKETIME(0,0,0)
     )                             AS Tiempo_Retardo
-FROM bbdd_config.tb_headcount HC
+FROM bbdd_cs_bog_tmk.tb_headcount_dts HC
 INNER JOIN bbdd_config.tb_soul_proglog SOUL
        ON HC.documento = SOUL.documento
 WHERE HC.Campana IN ({placeholders})

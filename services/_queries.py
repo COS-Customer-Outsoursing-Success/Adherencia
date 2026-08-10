@@ -318,7 +318,7 @@ FROM
 LEFT JOIN (SELECT
         Documento, Nombres_Apellidos, Nombre_Supervisor, Campana, Servicio
     FROM
-        bbdd_config.tb_headcount
+        bbdd_cs_bog_tmk.tb_headcount_dts
     WHERE
         Campana IN ('Claro - Movil Tmk Bogota', 'Claro / Hogar Tmk Bogota', 'Claro - Terminales & Tecnologia Bogota', 'Claro - Hogar Tmk Bogota')
             AND estado = 'Activo') HC
