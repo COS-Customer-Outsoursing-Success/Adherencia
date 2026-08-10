@@ -316,11 +316,18 @@ FROM
             ) AS SB
     ) DEA
 LEFT JOIN (SELECT
-        Documento, Nombres_Apellidos, Nombre_Supervisor, Campana, Servicio
+        Documento, Nombres_Apellidos, Nombre_Supervisor,
+        CASE Servicio
+            WHEN 'Migracion Ventas'    THEN 'Claro - Movil Tmk Bogota'
+            WHEN 'Portabilidad Ventas' THEN 'Claro - Movil Tmk Bogota'
+            WHEN 'Hogar Ventas'        THEN 'Claro - Hogar Tmk Bogota'
+            WHEN 'T&T'                 THEN 'Claro - Terminales & Tecnologia Bogota'
+        END AS Campana,
+        Servicio
     FROM
         bbdd_cs_bog_tmk.tb_headcount_dts
     WHERE
-        Campana IN ('Claro - Movil Tmk Bogota', 'Claro / Hogar Tmk Bogota', 'Claro - Terminales & Tecnologia Bogota', 'Claro - Hogar Tmk Bogota')
+        Servicio IN ('Migracion Ventas', 'Portabilidad Ventas', 'Hogar Ventas', 'T&T')
             AND estado = 'Activo') HC
             ON DEA.cedula = HC.Documento
     LEFT JOIN (

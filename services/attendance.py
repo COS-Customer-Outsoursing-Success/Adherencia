@@ -9,19 +9,28 @@ from utils.formatters import td_to_str, safe_pct, hhmmss_to_minutes
 
 logger = logging.getLogger(__name__)
 
-# Campañas monitoreadas
-CAMPANAS = (
-    "Claro - Movil Tmk Bogota",
-    "Claro / Hogar Tmk Bogota",
-    "Claro - Hogar Tmk Bogota",
-    "Claro - Terminales & Tecnologia Bogota",
+# Servicios monitoreados (bbdd_cs_bog_tmk.tb_headcount_dts.Campana no es confiable como
+# filtro: la misma campaña queda grabada con dos formatos distintos según cuándo se cargó
+# el registro, ej. "Claro - Movil Tmk Bogota" vs "Claro Movil TMK Bogota", y además el
+# campo Campana viene truncado a 25 caracteres. Servicio sí es estable, así que se filtra
+# por ahí y se normaliza el nombre de campaña que ve el resto de la app con un CASE.)
+SERVICIOS = (
+    "Migracion Ventas",
+    "Portabilidad Ventas",
+    "Hogar Ventas",
+    "T&T",
 )
 
 _BASE_SQL = """
 SELECT
     HC.Nombres_Apellidos          AS Nombre,
     HC.Nombre_Supervisor          AS Supervisor,
-    HC.Campana                    AS Campana,
+    CASE HC.Servicio
+        WHEN 'Migracion Ventas'    THEN 'Claro - Movil Tmk Bogota'
+        WHEN 'Portabilidad Ventas' THEN 'Claro - Movil Tmk Bogota'
+        WHEN 'Hogar Ventas'        THEN 'Claro - Hogar Tmk Bogota'
+        WHEN 'T&T'                 THEN 'Claro - Terminales & Tecnologia Bogota'
+    END                            AS Campana,
     IF(SOUL.hora_log_ini_turn > 0, 1, 0) AS Asiste,
     CASE
         WHEN SOUL.hora_log_ini_turn = 0
@@ -42,7 +51,7 @@ SELECT
 FROM bbdd_cs_bog_tmk.tb_headcount_dts HC
 INNER JOIN bbdd_config.tb_soul_proglog SOUL
        ON HC.documento = SOUL.documento
-WHERE HC.Campana IN ({placeholders})
+WHERE HC.Servicio IN ({placeholders})
   AND HC.Estado = 'Activo'
   AND HC.Cargo  = 'Asesor'
   AND SOUL.fecha_prog_ini_turn = CURDATE()
@@ -66,8 +75,8 @@ FROM attendance_snapshot
 
 
 def _build_query() -> tuple[str, tuple]:
-    placeholders = ", ".join(["%s"] * len(CAMPANAS))
-    return _BASE_SQL.format(placeholders=placeholders), CAMPANAS
+    placeholders = ", ".join(["%s"] * len(SERVICIOS))
+    return _BASE_SQL.format(placeholders=placeholders), SERVICIOS
 
 
 def _serialize_row(row: dict) -> dict:
