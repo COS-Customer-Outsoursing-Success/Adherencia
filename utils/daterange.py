@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+# Fecha más antigua con histórico cargado (inicio del backfill inicial). No hay
+# datos antes de esto, así que ninguna fecha resuelta debe quedar por debajo.
+MIN_AVAILABLE_DATE = "2026-08-01"
+
 
 def default_range() -> tuple[str, str]:
     """Rango por defecto cuando el usuario no elige fechas.
@@ -26,4 +30,5 @@ def resolve_date_range(filters: dict) -> tuple[str, str]:
     if not inicio and not fin:
         return default_range()
     inicio, fin = inicio or fin, fin or inicio
-    return (fin, inicio) if inicio > fin else (inicio, fin)
+    inicio, fin = (fin, inicio) if inicio > fin else (inicio, fin)
+    return max(inicio, MIN_AVAILABLE_DATE), max(fin, MIN_AVAILABLE_DATE)
