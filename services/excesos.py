@@ -120,7 +120,7 @@ def _build_row(r: dict) -> dict:
 def _apply_filters(rows: list[dict], filters: dict) -> list[dict]:
     result = rows
     if filters.get("supervisor"):
-        result = [r for r in result if r["Supervisor"] == filters["supervisor"]]
+        result = [r for r in result if r["Supervisor"] in filters["supervisor"]]
     if filters.get("campana"):
         result = [r for r in result if r["Campana"] == filters["campana"]]
     if filters.get("solo_con_exceso"):

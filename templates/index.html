@@ -51,10 +51,19 @@
 <section class="filters-bar" id="filters-section">
   <div class="filters-inner">
     <div class="filter-group">
-      <label class="filter-label" for="f-supervisor">Supervisor</label>
-      <select class="filter-select" id="f-supervisor">
-        <option value="">Todos</option>
-      </select>
+      <label class="filter-label" id="f-supervisor-label">Supervisor</label>
+      <div class="ms-dropdown" id="f-supervisor">
+        <button type="button" class="filter-select ms-dropdown__trigger" id="f-supervisor-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="f-supervisor-label">
+          <span class="ms-dropdown__trigger-text" id="f-supervisor-trigger-text">Todos</span>
+          <svg class="ms-dropdown__arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ms-dropdown__panel" id="f-supervisor-panel" role="listbox" hidden>
+          <label class="ms-dropdown__option ms-dropdown__option--all">
+            <input type="checkbox" id="f-supervisor-all" checked /> Todos
+          </label>
+          <div class="ms-dropdown__list" id="f-supervisor-list"></div>
+        </div>
+      </div>
     </div>
     <div class="filter-group">
       <label class="filter-label" for="f-campana">Campaña</label>
@@ -443,7 +452,7 @@
 <!-- SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Dashboard logic -->
-<script src="/static/js/dashboard.js?v=20260901a"></script>
+<script src="/static/js/dashboard.js?v=20260901b"></script>
 
 </body>
 </html>

@@ -38,19 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // ════════════════════════════════════════════════════════════════════════
 // RANGO DE FECHAS POR DEFECTO
 // ════════════════════════════════════════════════════════════════════════
-// Primeros 4 días del mes → mes anterior completo. Desde el día 5 → mes
-// actual, de su día 1 a hoy. Debe reflejar utils/daterange.py:default_range().
+// Siempre hoy. Debe reflejar utils/daterange.py:default_range().
 
 function getDefaultDateRange() {
-  const today = new Date();
-  const iso = d => d.toISOString().slice(0, 10);
-  if (today.getDate() <= 4) {
-    const lastPrev = new Date(today.getFullYear(), today.getMonth(), 0);
-    const firstPrev = new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1);
-    return { inicio: iso(firstPrev), fin: iso(lastPrev) };
-  }
-  const firstCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
-  return { inicio: iso(firstCurrent), fin: iso(today) };
+  const iso = new Date().toISOString().slice(0, 10);
+  return { inicio: iso, fin: iso };
 }
 
 function setDefaultDateRange() {
@@ -75,14 +67,86 @@ function clampDateFilters() {
 }
 
 // ════════════════════════════════════════════════════════════════════════
+// SUPERVISOR (multiselect por checkboxes)
+// ════════════════════════════════════════════════════════════════════════
+
+function populateSupervisorOptions(names) {
+  const list = document.getElementById('f-supervisor-list');
+  if (!list) return;
+  list.innerHTML = names.map(name => `
+    <label class="ms-dropdown__option">
+      <input type="checkbox" value="${esc(name)}" /> ${esc(name)}
+    </label>`).join('');
+}
+
+function getSelectedSupervisors() {
+  return [...document.querySelectorAll('#f-supervisor-list input[type="checkbox"]:checked')].map(cb => cb.value);
+}
+
+function updateSupervisorTrigger() {
+  const textEl = document.getElementById('f-supervisor-trigger-text');
+  if (!textEl) return;
+  const selected = getSelectedSupervisors();
+  textEl.textContent = selected.length === 0 ? 'Todos'
+    : selected.length === 1 ? selected[0]
+    : `${selected.length} seleccionados`;
+}
+
+function resetSupervisorFilter() {
+  const all = document.getElementById('f-supervisor-all');
+  if (all) all.checked = true;
+  document.querySelectorAll('#f-supervisor-list input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+  updateSupervisorTrigger();
+}
+
+function setupSupervisorMultiselect(onChange) {
+  const wrapper = document.getElementById('f-supervisor');
+  const trigger = document.getElementById('f-supervisor-trigger');
+  const panel   = document.getElementById('f-supervisor-panel');
+  const all     = document.getElementById('f-supervisor-all');
+  const list    = document.getElementById('f-supervisor-list');
+  if (!wrapper || !trigger || !panel || !all || !list) return;
+
+  trigger.addEventListener('click', () => {
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    trigger.setAttribute('aria-expanded', String(willOpen));
+  });
+
+  document.addEventListener('click', e => {
+    if (!wrapper.contains(e.target) && !panel.hidden) {
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  all.addEventListener('change', () => {
+    if (all.checked) {
+      list.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    }
+    updateSupervisorTrigger();
+    onChange();
+  });
+
+  list.addEventListener('change', e => {
+    if (!e.target.matches('input[type="checkbox"]')) return;
+    const anyChecked = list.querySelectorAll('input[type="checkbox"]:checked').length > 0;
+    all.checked = !anyChecked;
+    updateSupervisorTrigger();
+    onChange();
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // EVENT LISTENERS
 // ════════════════════════════════════════════════════════════════════════
 
 function setupEventListeners() {
-  ['f-supervisor', 'f-campana', 'f-fecha-ini', 'f-fecha-fin'].forEach(id => {
+  ['f-campana', 'f-fecha-ini', 'f-fecha-fin'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', debounce(refreshReport, 250));
   });
+  setupSupervisorMultiselect(debounce(refreshReport, 250));
 
   document.getElementById('btn-clear-filters').addEventListener('click', clearFilters);
   document.getElementById('btn-refresh').addEventListener('click', () => refreshReport(true));
@@ -145,11 +209,10 @@ function setupEventListeners() {
 function buildQueryParams() {
   clampDateFilters();
   const params = new URLSearchParams();
-  const supervisor = document.getElementById('f-supervisor')?.value?.trim();
   const campana    = document.getElementById('f-campana')?.value?.trim();
   const fechaIni   = document.getElementById('f-fecha-ini')?.value?.trim();
   const fechaFin   = document.getElementById('f-fecha-fin')?.value?.trim();
-  if (supervisor) params.set('supervisor', supervisor);
+  getSelectedSupervisors().forEach(s => params.append('supervisor', s));
   if (campana)    params.set('campana', campana);
   if (fechaIni)   params.set('fecha_inicio', fechaIni);
   if (fechaFin)   params.set('fecha_fin', fechaFin);
@@ -191,12 +254,7 @@ async function loadFilterOptions() {
     const res  = await fetch('/api/detalle-agente/filters');
     const opts = await res.json();
 
-    const supSel = document.getElementById('f-supervisor');
-    opts.supervisors.forEach(s => {
-      const o = document.createElement('option');
-      o.value = s; o.textContent = s;
-      supSel.appendChild(o);
-    });
+    populateSupervisorOptions(opts.supervisors);
 
     const camSel = document.getElementById('f-campana');
     opts.campanas.forEach(c => {
@@ -210,7 +268,7 @@ async function loadFilterOptions() {
 }
 
 function clearFilters() {
-  document.getElementById('f-supervisor').value = '';
+  resetSupervisorFilter();
   document.getElementById('f-campana').value = '';
   document.getElementById('search-name').value = '';
   document.getElementById('search-supervisor').value = '';

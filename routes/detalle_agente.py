@@ -10,7 +10,7 @@ detalle_agente_bp = Blueprint("detalle_agente", __name__)
 
 def _filters_from_request() -> dict:
     return {
-        "supervisor": request.args.get("supervisor", ""),
+        "supervisor": request.args.getlist("supervisor"),
         "campana":    request.args.get("campana", ""),
         "fecha_inicio": request.args.get("fecha_inicio", ""),
         "fecha_fin":    request.args.get("fecha_fin", ""),

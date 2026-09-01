@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 # Fecha más antigua con histórico cargado (inicio del backfill inicial). No hay
 # datos antes de esto, así que ninguna fecha resuelta debe quedar por debajo.
@@ -8,18 +8,9 @@ MIN_AVAILABLE_DATE = "2026-08-01"
 
 
 def default_range() -> tuple[str, str]:
-    """Rango por defecto cuando el usuario no elige fechas.
-
-    Los primeros 4 días del mes casi no tienen datos del mes en curso, así que
-    se muestra el mes anterior completo. Desde el día 5 en adelante se muestra
-    el mes actual, de su día 1 a hoy.
-    """
-    today = date.today()
-    if today.day <= 4:
-        last_day_prev = today.replace(day=1) - timedelta(days=1)
-        first_day_prev = last_day_prev.replace(day=1)
-        return first_day_prev.isoformat(), last_day_prev.isoformat()
-    return today.replace(day=1).isoformat(), today.isoformat()
+    """Rango por defecto cuando el usuario no elige fechas: siempre hoy."""
+    today = date.today().isoformat()
+    return today, today
 
 
 def resolve_date_range(filters: dict) -> tuple[str, str]:

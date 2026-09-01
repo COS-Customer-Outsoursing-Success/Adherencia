@@ -10,7 +10,7 @@ excesos_bp = Blueprint("excesos", __name__)
 
 def _filters_from_request() -> dict:
     return {
-        "supervisor":      request.args.get("supervisor", ""),
+        "supervisor":      request.args.getlist("supervisor"),
         "campana":         request.args.get("campana", ""),
         "solo_con_exceso": request.args.get("solo_con_exceso", "") == "1",
         "fecha_inicio": request.args.get("fecha_inicio", ""),

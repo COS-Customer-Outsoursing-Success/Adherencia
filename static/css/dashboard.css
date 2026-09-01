@@ -303,6 +303,64 @@ body {
 
 .filter-actions { display: flex; align-items: flex-end; gap: 8px; }
 
+/* ── Multiselect (checkboxes) para filtros con varios valores ─────────── */
+.ms-dropdown { position: relative; }
+
+.ms-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+
+.ms-dropdown__trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-dropdown__arrow { flex: none; color: var(--gray-500); transition: transform var(--transition); }
+.ms-dropdown__trigger[aria-expanded="true"] .ms-dropdown__arrow { transform: rotate(180deg); }
+
+.ms-dropdown__panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--white);
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  padding: 6px 0;
+}
+
+.ms-dropdown__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  color: var(--gray-800);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ms-dropdown__option:hover { background: var(--gray-50); }
+
+.ms-dropdown__option--all {
+  border-bottom: 1px solid var(--gray-200);
+  font-weight: 600;
+  margin-bottom: 4px;
+  padding-bottom: 8px;
+}
+
+.ms-dropdown__option input[type="checkbox"] { accent-color: var(--claro-red); cursor: pointer; }
+
 .filter-group--checkbox { justify-content: flex-end; }
 
 .filter-checkbox {

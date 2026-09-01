@@ -20,7 +20,7 @@ api_bp = Blueprint("api", __name__)
 
 def _filters_from_request() -> dict:
     return {
-        "supervisor":   request.args.get("supervisor", ""),
+        "supervisor":   request.args.getlist("supervisor"),
         "campana":      request.args.get("campana", ""),
         "estado":       request.args.get("estado", ""),
         "hora_inicio":  request.args.get("hora_inicio", ""),
