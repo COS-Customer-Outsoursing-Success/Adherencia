@@ -7,7 +7,8 @@ from datetime import datetime
 
 import supabase_db
 from services._queries import AGENT_METRICS_SNAPSHOT_SQL
-from utils.formatters import safe_pct, seconds_to_hhmmss
+from utils.daterange import resolve_date_range
+from utils.formatters import date_to_str, safe_pct, seconds_to_hhmmss
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ def _mock_raw_rows() -> list[dict]:
         t_break = rng.uniform(10, 25) * 60
         t_bano = rng.uniform(3, 18) * 60
         rows.append({
+            "Fecha": datetime.now().date().isoformat(),
             "Nombres_Apellidos": nombre,
             "Supervisor": rng.choice(_MOCK_SUPERVISORES),
             "Campana": rng.choice(_MOCK_CAMPANAS),
@@ -78,6 +80,7 @@ def _build_row(r: dict) -> dict:
     )
 
     return {
+        "Fecha": date_to_str(r.get("Fecha")),
         "Asesor": r.get("Nombres_Apellidos"),
         "Supervisor": r.get("Supervisor"),
         "Campana": r.get("Campana"),
@@ -128,13 +131,15 @@ def _apply_filters(rows: list[dict], filters: dict) -> list[dict]:
 # ── Funciones públicas ──────────────────────────────────────────────────────
 
 def get_raw_data(filters: dict | None = None) -> list[dict]:
+    filters = filters or {}
     if os.getenv("EXCESOS_MOCK") == "1":
         logger.warning("EXCESOS_MOCK=1: usando datos de muestra, NO son datos reales de MySQL")
         rows = _mock_raw_rows()
     else:
-        rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL)
+        fecha_inicio, fecha_fin = resolve_date_range(filters)
+        rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
     built = [_build_row(r) for r in rows]
-    return _apply_filters(built, filters or {})
+    return _apply_filters(built, filters)
 
 
 def get_filter_options() -> dict:
@@ -148,8 +153,8 @@ def get_filter_options() -> dict:
 def get_kpis(data: list[dict] | None = None) -> dict:
     if data is None:
         data = get_raw_data()
-    total_agentes = len(data)
-    con_exceso = sum(1 for r in data if r["T_Exceso_Total_seg"] > 0)
+    total_agentes = len({r["Asesor"] for r in data})
+    con_exceso = len({r["Asesor"] for r in data if r["T_Exceso_Total_seg"] > 0})
     total_alm_seg = sum(r["T_Exceso_Alm_seg"] for r in data)
     total_break_seg = sum(r["T_Exceso_Break_seg"] for r in data)
     total_bano_seg = sum(r["T_Exceso_Bano_seg"] for r in data)
@@ -173,13 +178,13 @@ def get_supervisor_summary(data: list[dict] | None = None) -> list[dict]:
         s = r["Supervisor"] or "Sin asignar"
         if s not in acc:
             acc[s] = {
-                "supervisor": s, "agentes": 0, "con_exceso": 0,
+                "supervisor": s, "_agentes": set(), "_con_exceso": set(),
                 "exceso_alm_min": 0.0, "exceso_break_min": 0.0,
                 "exceso_bano_min": 0.0, "exceso_total_min": 0.0,
             }
-        acc[s]["agentes"] += 1
+        acc[s]["_agentes"].add(r["Asesor"])
         if r["T_Exceso_Total_seg"] > 0:
-            acc[s]["con_exceso"] += 1
+            acc[s]["_con_exceso"].add(r["Asesor"])
         acc[s]["exceso_alm_min"] += r["T_Exceso_Alm_seg"] / 60
         acc[s]["exceso_break_min"] += r["T_Exceso_Break_seg"] / 60
         acc[s]["exceso_bano_min"] += r["T_Exceso_Bano_seg"] / 60
@@ -187,6 +192,8 @@ def get_supervisor_summary(data: list[dict] | None = None) -> list[dict]:
 
     result = list(acc.values())
     for s in result:
+        s["agentes"] = len(s.pop("_agentes"))
+        s["con_exceso"] = len(s.pop("_con_exceso"))
         for k in ("exceso_alm_min", "exceso_break_min", "exceso_bano_min", "exceso_total_min"):
             s[k] = round(s[k], 1)
     result.sort(key=lambda x: x["exceso_total_min"], reverse=True)

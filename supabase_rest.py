@@ -39,6 +39,12 @@ def delete_all(table: str) -> None:
     resp.raise_for_status()
 
 
+def delete_by_date(table: str, fecha: str) -> None:
+    url = f"{Config.SUPABASE_URL}/rest/v1/{table}"
+    resp = requests.delete(url, headers=_headers(), params={"fecha": f"eq.{fecha}"}, timeout=30)
+    resp.raise_for_status()
+
+
 def _jsonable(value):
     """Convierte tipos no serializables por json (Decimal de MySQL, etc.) a nativos de Python."""
     if isinstance(value, Decimal):
@@ -64,4 +70,11 @@ def bulk_insert(table: str, rows: list[dict]) -> None:
 def replace_all(table: str, rows: list[dict]) -> None:
     """Borra todo el contenido de la tabla y lo reemplaza por `rows`."""
     delete_all(table)
+    bulk_insert(table, rows)
+
+
+def replace_by_date(table: str, fecha: str, rows: list[dict]) -> None:
+    """Borra solo las filas de `fecha` y las reemplaza por `rows`, preservando
+    el histórico de otras fechas (usado por el sync incremental diario)."""
+    delete_by_date(table, fecha)
     bulk_insert(table, rows)

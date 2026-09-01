@@ -7,7 +7,8 @@ from datetime import datetime
 
 import supabase_db
 from services._queries import AGENT_METRICS_SNAPSHOT_SQL
-from utils.formatters import safe_pct, seconds_to_hhmmss
+from utils.daterange import resolve_date_range
+from utils.formatters import date_to_str, safe_pct, seconds_to_hhmmss
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ def _build_row(r: dict) -> dict:
     t_desconex_seg = _day_frac_to_seconds(r.get("tiempo_desconexion_minutos"))
 
     return {
+        "Fecha": date_to_str(r.get("Fecha")),
         "Asesor": r.get("Nombres_Apellidos"),
         "Supervisor": r.get("Supervisor"),
         "Campana": r.get("Campana"),
@@ -97,6 +99,7 @@ def _mock_raw_rows() -> list[dict]:
         t_logueado = rng.uniform(6, 9) * 3600
         llamadas = rng.randint(60, 160)
         rows.append({
+            "Fecha": datetime.now().date().isoformat(),
             "Nombres_Apellidos": nombre,
             "Supervisor": rng.choice(_MOCK_SUPERVISORES),
             "Campana": rng.choice(_MOCK_CAMPANAS),
@@ -125,13 +128,15 @@ def _mock_raw_rows() -> list[dict]:
 # ── Funciones públicas ──────────────────────────────────────────────────────
 
 def get_raw_data(filters: dict | None = None) -> list[dict]:
+    filters = filters or {}
     if os.getenv("EXCESOS_MOCK") == "1":
         logger.warning("EXCESOS_MOCK=1: usando datos de muestra, NO son datos reales de MySQL")
         rows = _mock_raw_rows()
     else:
-        rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL)
+        fecha_inicio, fecha_fin = resolve_date_range(filters)
+        rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
     built = [_build_row(r) for r in rows]
-    return _apply_filters(built, filters or {})
+    return _apply_filters(built, filters)
 
 
 def get_filter_options() -> dict:
@@ -161,7 +166,7 @@ def get_kpis(data: list[dict] | None = None) -> dict:
     desconex_prom_seg = sum(r["T_Desconex_seg"] for r in data) / total
 
     return {
-        "total_agentes": total,
+        "total_agentes": len({r["Asesor"] for r in data}),
         "total_llamadas": total_llamadas,
         "total_ventas": total_ventas,
         "total_desconexiones": total_desconexiones,

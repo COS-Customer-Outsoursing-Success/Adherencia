@@ -12,6 +12,8 @@ def _filters_from_request() -> dict:
     return {
         "supervisor": request.args.get("supervisor", ""),
         "campana":    request.args.get("campana", ""),
+        "fecha_inicio": request.args.get("fecha_inicio", ""),
+        "fecha_fin":    request.args.get("fecha_fin", ""),
     }
 
 

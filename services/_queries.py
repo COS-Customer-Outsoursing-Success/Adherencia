@@ -3,6 +3,7 @@
 # ── Lectura desde Supabase (usada por excesos.py y detalle_agente.py en la app desplegada) ──
 AGENT_METRICS_SNAPSHOT_SQL = """
 SELECT
+    fecha                       AS "Fecha",
     nombre                      AS "Nombres_Apellidos",
     supervisor                  AS "Supervisor",
     campana                     AS "Campana",
@@ -34,6 +35,7 @@ SELECT
     shrinkage                   AS "Shrinkage",
     eficiencia                  AS "Eficiencia"
 FROM agent_metrics_snapshot
+WHERE fecha BETWEEN %s AND %s
 """
 
 
@@ -47,7 +49,7 @@ WITH base_login_logout AS (
         fecha
     FROM bbdd_bigdata_login_logout_vicidial.tb_login_logout_vicidial_claro_terminales_tecnologia
     WHERE event IN ('LOGIN', 'LOGOUT')
-      AND fecha = CURDATE()
+      AND fecha = %(fecha)s
 
     UNION ALL
 
@@ -58,7 +60,7 @@ WITH base_login_logout AS (
         fecha
     FROM bbdd_bigdata_login_logout_vicidial.tb_login_logout_vicidial_tmk_bog
     WHERE event IN ('LOGIN', 'LOGOUT')
-      AND fecha = CURDATE()
+      AND fecha = %(fecha)s
 ),
 
 login_logout AS (
@@ -106,7 +108,7 @@ mrc_inbound AS (
                call_date,
                status_name COLLATE utf8mb4_unicode_ci AS status_name
         FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_inb_claro_terminales_tecnologia
-        WHERE call_date >= CURDATE()
+        WHERE call_date >= %(fecha)s AND call_date < %(fecha)s + INTERVAL 1 DAY
 
         UNION ALL
 
@@ -114,7 +116,7 @@ mrc_inbound AS (
                call_date,
                status_name COLLATE utf8mb4_unicode_ci AS status_name
         FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_inb_tmk_bog
-        WHERE call_date >= CURDATE()
+        WHERE call_date >= %(fecha)s AND call_date < %(fecha)s + INTERVAL 1 DAY
     ) AS union_inb
     WHERE user <> 'VDCL'
     GROUP BY Documento
@@ -130,7 +132,7 @@ mrc_outbound AS (
                call_date,
                status_name COLLATE utf8mb4_unicode_ci AS status_name
         FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_out_claro_terminales_tecnologia
-        WHERE call_date >= CURDATE()
+        WHERE call_date >= %(fecha)s AND call_date < %(fecha)s + INTERVAL 1 DAY
 
         UNION ALL
 
@@ -138,7 +140,7 @@ mrc_outbound AS (
                call_date,
                status_name COLLATE utf8mb4_unicode_ci AS status_name
         FROM bbdd_bigdata_marcaciones_vicidial.tb_marcaciones_vicidial_out_tmk_bog
-        WHERE call_date >= CURDATE()
+        WHERE call_date >= %(fecha)s AND call_date < %(fecha)s + INTERVAL 1 DAY
     ) AS union_out
     WHERE user <> 'VDCL'
     GROUP BY Documento
@@ -311,7 +313,7 @@ FROM
                 TIME_TO_SEC(t_whatsapp) AS T_whatsapp,
                 DATE(fecha_cargue) AS Fecha
              FROM bbdd_cs_bog_tmk.tb_detalle_agente_daily_new_dts
-             WHERE fecha_cargue >= curdate()
+             WHERE fecha_cargue >= %(fecha)s AND fecha_cargue < %(fecha)s + INTERVAL 1 DAY
              AND usuario <> 'TOTALS'
             ) AS SB
     ) DEA
@@ -341,7 +343,7 @@ LEFT JOIN (SELECT
     FROM
         bbdd_config.tb_soul_proglog
     WHERE
-        fecha_prog_ini_turn = curdate()) SOUL
+        fecha_prog_ini_turn = %(fecha)s) SOUL
         ON DEA.cedula = SOUL.documento
 LEFT JOIN mrc_inbound AS mrc_inb ON DEA.cedula = mrc_inb.Documento
 LEFT JOIN mrc_outbound AS mrc_out ON DEA.cedula = mrc_out.Documento

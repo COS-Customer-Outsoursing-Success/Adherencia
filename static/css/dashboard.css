@@ -291,6 +291,8 @@ body {
   width: 100px;
 }
 
+.filter-input[type="date"] { width: 140px; }
+
 .filter-time-range {
   display: flex;
   align-items: center;

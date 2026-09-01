@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from datetime import date
 
 import supabase_rest
 from database import execute_query
@@ -31,13 +32,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def sync_attendance() -> int:
-    logger.info("Consultando datos de asistencia frescos del MySQL corporativo...")
-    rows = get_raw_data_from_mysql()
+def sync_attendance(fecha: str) -> int:
+    logger.info("Consultando datos de asistencia del %s en el MySQL corporativo...", fecha)
+    rows = get_raw_data_from_mysql(fecha)
     logger.info("%d filas obtenidas de MySQL (asistencia)", len(rows))
 
     payload = [
         {
+            "fecha": fecha,
             "nombre": r.get("Nombre"),
             "supervisor": r.get("Supervisor"),
             "campana": r.get("Campana"),
@@ -50,19 +52,20 @@ def sync_attendance() -> int:
         }
         for r in rows
     ]
-    supabase_rest.replace_all("attendance_snapshot", payload)
+    supabase_rest.replace_by_date("attendance_snapshot", fecha, payload)
 
-    logger.info("Sincronización asistencia completa: %d filas escritas en Supabase", len(rows))
+    logger.info("Sincronización asistencia completa (%s): %d filas escritas en Supabase", fecha, len(rows))
     return len(rows)
 
 
-def sync_agent_metrics() -> int:
-    logger.info("Consultando métricas de agentes frescas del MySQL corporativo...")
-    rows = execute_query(AGENT_METRICS_SQL)
+def sync_agent_metrics(fecha: str) -> int:
+    logger.info("Consultando métricas de agentes del %s en el MySQL corporativo...", fecha)
+    rows = execute_query(AGENT_METRICS_SQL, {"fecha": fecha})
     logger.info("%d filas obtenidas de MySQL (agent_metrics)", len(rows))
 
     payload = [
         {
+            "fecha": fecha,
             "nombre": r.get("Nombres_Apellidos"),
             "supervisor": r.get("Supervisor"),
             "campana": r.get("Campana"),
@@ -96,23 +99,26 @@ def sync_agent_metrics() -> int:
         }
         for r in rows
     ]
-    supabase_rest.replace_all("agent_metrics_snapshot", payload)
+    supabase_rest.replace_by_date("agent_metrics_snapshot", fecha, payload)
 
-    logger.info("Sincronización agent_metrics completa: %d filas escritas en Supabase", len(rows))
+    logger.info("Sincronización agent_metrics completa (%s): %d filas escritas en Supabase", fecha, len(rows))
     return len(rows)
 
 
-def sync() -> dict:
+def sync(fecha: str | None = None) -> dict:
+    """Sincroniza un día puntual (por defecto, hoy). Solo reemplaza las filas de
+    ese día en Supabase, preservando el histórico de otras fechas."""
+    fecha = fecha or date.today().isoformat()
     results = {}
 
     try:
-        results["attendance"] = sync_attendance()
+        results["attendance"] = sync_attendance(fecha)
     except Exception:
         logger.exception("Error sincronizando asistencia")
         results["attendance"] = None
 
     try:
-        results["agent_metrics"] = sync_agent_metrics()
+        results["agent_metrics"] = sync_agent_metrics(fecha)
     except Exception:
         logger.exception("Error sincronizando métricas de agentes")
         results["agent_metrics"] = None

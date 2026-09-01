@@ -27,6 +27,15 @@ def dt_to_str(value: Any) -> str | None:
     return str(value)
 
 
+def date_to_str(value: Any) -> str | None:
+    """Convierte date/datetime (de MySQL o Postgres) a string 'YYYY-MM-DD'."""
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()[:10]
+    return str(value)
+
+
 def safe_pct(numerator: int, denominator: int, decimals: int = 1) -> float:
     """Calcula porcentaje con protección contra división por cero."""
     if denominator == 0:

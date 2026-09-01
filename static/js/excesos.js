@@ -26,6 +26,7 @@ const state = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  setDefaultDateRange();
   setupEventListeners();
   loadFilterOptions();
   refreshReport();
@@ -33,11 +34,37 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ════════════════════════════════════════════════════════════════════════
+// RANGO DE FECHAS POR DEFECTO
+// ════════════════════════════════════════════════════════════════════════
+// Primeros 4 días del mes → mes anterior completo. Desde el día 5 → mes
+// actual, de su día 1 a hoy. Debe reflejar utils/daterange.py:default_range().
+
+function getDefaultDateRange() {
+  const today = new Date();
+  const iso = d => d.toISOString().slice(0, 10);
+  if (today.getDate() <= 4) {
+    const lastPrev = new Date(today.getFullYear(), today.getMonth(), 0);
+    const firstPrev = new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1);
+    return { inicio: iso(firstPrev), fin: iso(lastPrev) };
+  }
+  const firstCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+  return { inicio: iso(firstCurrent), fin: iso(today) };
+}
+
+function setDefaultDateRange() {
+  const { inicio, fin } = getDefaultDateRange();
+  const ini = document.getElementById('f-fecha-ini');
+  const end = document.getElementById('f-fecha-fin');
+  if (ini) ini.value = inicio;
+  if (end) end.value = fin;
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // EVENT LISTENERS
 // ════════════════════════════════════════════════════════════════════════
 
 function setupEventListeners() {
-  ['f-supervisor', 'f-campana', 'f-solo-exceso'].forEach(id => {
+  ['f-supervisor', 'f-campana', 'f-solo-exceso', 'f-fecha-ini', 'f-fecha-fin'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', debounce(refreshReport, 250));
   });
@@ -97,9 +124,13 @@ function buildQueryParams() {
   const supervisor = document.getElementById('f-supervisor')?.value?.trim();
   const campana    = document.getElementById('f-campana')?.value?.trim();
   const soloExceso = document.getElementById('f-solo-exceso')?.checked;
+  const fechaIni   = document.getElementById('f-fecha-ini')?.value?.trim();
+  const fechaFin   = document.getElementById('f-fecha-fin')?.value?.trim();
   if (supervisor) params.set('supervisor', supervisor);
   if (campana)    params.set('campana', campana);
   if (soloExceso) params.set('solo_con_exceso', '1');
+  if (fechaIni)   params.set('fecha_inicio', fechaIni);
+  if (fechaFin)   params.set('fecha_fin', fechaFin);
   return params.toString();
 }
 
@@ -164,6 +195,7 @@ function clearFilters() {
   document.getElementById('search-supervisor').value = '';
   state.agente.searchName = '';
   state.agente.searchSup  = '';
+  setDefaultDateRange();
   refreshReport();
 }
 
@@ -504,7 +536,7 @@ function renderAgenteTable() {
   const { filtered, page, pageSize } = state.agente;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="13" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
     renderPagination(0, page, pageSize);
     return;
   }
@@ -515,6 +547,7 @@ function renderAgenteTable() {
   tbody.innerHTML = slice.map(r => {
     return `
       <tr>
+        <td class="text-center">${neutralBadge(r.Fecha || '—')}</td>
         <td><strong>${esc(r.Asesor || '—')}</strong></td>
         <td>${esc(r.Supervisor || '—')}</td>
         <td><span style="font-size:0.78rem;color:#757575">${esc(r.Campana || '—')}</span></td>
@@ -568,7 +601,7 @@ function exportExcel() {
     return;
   }
   const rows = state.agente.filtered.map(r => ({
-    Asesor: r.Asesor || '', Supervisor: r.Supervisor || '', Campaña: r.Campana || '',
+    Fecha: r.Fecha || '', Asesor: r.Asesor || '', Supervisor: r.Supervisor || '', Campaña: r.Campana || '',
     T_Login: r.T_login, T_Pantalla_Verde: r.T_Pantalla_Verde, T_Dead: r.T_dead,
     T_Preturno: r.T_preturno, T_Capacitacion: r.T_capacitacion, T_Whatsapp: r.T_whatsapp,
     Exceso_Almuerzo: r.T_Exceso_Alm, Exceso_Break: r.T_Exceso_Break, Exceso_Bano: r.T_Exceso_Bano,
@@ -586,9 +619,9 @@ function exportCSV() {
     showToast('No hay datos para exportar', 'error');
     return;
   }
-  const headers = ['Asesor','Supervisor','Campaña','T_Login','T_Pantalla_Verde','T_Dead','T_Preturno','T_Capacitacion','T_Whatsapp','Exceso_Almuerzo','Exceso_Break','Exceso_Bano','Exceso_Total'];
+  const headers = ['Fecha','Asesor','Supervisor','Campaña','T_Login','T_Pantalla_Verde','T_Dead','T_Preturno','T_Capacitacion','T_Whatsapp','Exceso_Almuerzo','Exceso_Break','Exceso_Bano','Exceso_Total'];
   const rows = state.agente.filtered.map(r => [
-    csvCell(r.Asesor), csvCell(r.Supervisor), csvCell(r.Campana),
+    csvCell(r.Fecha), csvCell(r.Asesor), csvCell(r.Supervisor), csvCell(r.Campana),
     csvCell(r.T_login), csvCell(r.T_Pantalla_Verde), csvCell(r.T_dead),
     csvCell(r.T_preturno), csvCell(r.T_capacitacion), csvCell(r.T_whatsapp),
     csvCell(r.T_Exceso_Alm), csvCell(r.T_Exceso_Break), csvCell(r.T_Exceso_Bano),

@@ -79,6 +79,14 @@
         <input class="filter-input" type="time" id="f-hora-fin" placeholder="Hasta" />
       </div>
     </div>
+    <div class="filter-group">
+      <label class="filter-label">Rango de fechas</label>
+      <div class="filter-time-range">
+        <input class="filter-input" type="date" id="f-fecha-ini" aria-label="Fecha desde" />
+        <span class="filter-time-sep">—</span>
+        <input class="filter-input" type="date" id="f-fecha-fin" aria-label="Fecha hasta" />
+      </div>
+    </div>
     <div class="filter-actions">
       <button class="btn-filter-clear" id="btn-clear-filters">Limpiar filtros</button>
     </div>
@@ -394,6 +402,7 @@
       <table class="data-table data-table--sortable" id="advisor-table">
         <thead>
           <tr>
+            <th data-col="Fecha" class="sortable text-center">Fecha <span class="sort-icon">↕</span></th>
             <th data-col="Nombre" class="sortable">Nombre <span class="sort-icon">↕</span></th>
             <th data-col="Supervisor" class="sortable">Supervisor <span class="sort-icon">↕</span></th>
             <th data-col="Campana" class="sortable">Campaña <span class="sort-icon">↕</span></th>
@@ -404,7 +413,7 @@
           </tr>
         </thead>
         <tbody id="advisor-tbody">
-          <tr><td colspan="7" class="empty-row">Cargando datos…</td></tr>
+          <tr><td colspan="8" class="empty-row">Cargando datos…</td></tr>
         </tbody>
       </table>
     </div>

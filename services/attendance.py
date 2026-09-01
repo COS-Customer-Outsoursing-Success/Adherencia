@@ -5,7 +5,8 @@ from typing import Any
 
 from database import execute_query
 import supabase_db
-from utils.formatters import td_to_str, safe_pct, hhmmss_to_minutes
+from utils.daterange import resolve_date_range
+from utils.formatters import td_to_str, safe_pct, hhmmss_to_minutes, date_to_str
 
 logger = logging.getLogger(__name__)
 
@@ -47,20 +48,22 @@ SELECT
         SOUL.Hora_Prog_Ini_Turn < SOUL.Hora_Log_Ini_Turn,
         TIMEDIFF(SOUL.Hora_Log_Ini_Turn, SOUL.Hora_Prog_Ini_Turn),
         MAKETIME(0,0,0)
-    )                             AS Tiempo_Retardo
+    )                             AS Tiempo_Retardo,
+    SOUL.fecha_prog_ini_turn      AS Fecha
 FROM bbdd_cs_bog_tmk.tb_headcount_dts HC
 INNER JOIN bbdd_config.tb_soul_proglog SOUL
        ON HC.documento = SOUL.documento
 WHERE HC.Servicio IN ({placeholders})
   AND HC.Estado = 'Activo'
   AND HC.Cargo  = 'Asesor'
-  AND SOUL.fecha_prog_ini_turn = CURDATE()
+  AND SOUL.fecha_prog_ini_turn = %s
   AND SOUL.hora_prog_ini_turn  > 0
 """
 
 
 _SNAPSHOT_SQL = """
 SELECT
+    fecha            AS "Fecha",
     nombre           AS "Nombre",
     supervisor       AS "Supervisor",
     campana          AS "Campana",
@@ -71,12 +74,13 @@ SELECT
     hora_inicio      AS "Hora_Inicio",
     tiempo_retardo   AS "Tiempo_Retardo"
 FROM attendance_snapshot
+WHERE fecha BETWEEN %s AND %s
 """
 
 
-def _build_query() -> tuple[str, tuple]:
+def _build_query(fecha: str) -> tuple[str, tuple]:
     placeholders = ", ".join(["%s"] * len(SERVICIOS))
-    return _BASE_SQL.format(placeholders=placeholders), SERVICIOS
+    return _BASE_SQL.format(placeholders=placeholders), SERVICIOS + (fecha,)
 
 
 def _serialize_row(row: dict) -> dict:
@@ -86,6 +90,7 @@ def _serialize_row(row: dict) -> dict:
         "Hora_Programada": td_to_str(row.get("Hora_Programada")),
         "Hora_Inicio":     td_to_str(row.get("Hora_Inicio")),
         "Tiempo_Retardo":  td_to_str(row.get("Tiempo_Retardo")),
+        "Fecha":           date_to_str(row.get("Fecha")),
     }
 
 
@@ -121,13 +126,18 @@ def _apply_filters(rows: list[dict], filters: dict) -> list[dict]:
 
 def get_raw_data(filters: dict | None = None) -> list[dict]:
     """Datos de asistencia leídos desde Supabase (usado por la app Flask)."""
-    rows = supabase_db.execute_query(_SNAPSHOT_SQL)
-    return _apply_filters(rows, filters or {})
+    filters = filters or {}
+    fecha_inicio, fecha_fin = resolve_date_range(filters)
+    rows = supabase_db.execute_query(_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+    for r in rows:
+        r["Fecha"] = date_to_str(r.get("Fecha"))
+    return _apply_filters(rows, filters)
 
 
-def get_raw_data_from_mysql(filters: dict | None = None) -> list[dict]:
-    """Datos de asistencia leídos directo del MySQL corporativo (solo para el script de sync)."""
-    sql, params = _build_query()
+def get_raw_data_from_mysql(fecha: str, filters: dict | None = None) -> list[dict]:
+    """Datos de asistencia de un día puntual, leídos directo del MySQL corporativo
+    (solo para el script de sync/backfill; `fecha` en formato 'YYYY-MM-DD')."""
+    sql, params = _build_query(fecha)
     rows = execute_query(sql, params)
     serialized = [_serialize_row(r) for r in rows]
     return _apply_filters(serialized, filters or {})

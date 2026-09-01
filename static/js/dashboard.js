@@ -40,6 +40,7 @@ const state = {
 
 // ── Entrada ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  setDefaultDateRange();
   setupEventListeners();
   loadFilterOptions();
   refreshDashboard();
@@ -47,12 +48,38 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ════════════════════════════════════════════════════════════════════════
+// RANGO DE FECHAS POR DEFECTO
+// ════════════════════════════════════════════════════════════════════════
+// Primeros 4 días del mes → mes anterior completo. Desde el día 5 → mes
+// actual, de su día 1 a hoy. Debe reflejar utils/daterange.py:default_range().
+
+function getDefaultDateRange() {
+  const today = new Date();
+  const iso = d => d.toISOString().slice(0, 10);
+  if (today.getDate() <= 4) {
+    const lastPrev = new Date(today.getFullYear(), today.getMonth(), 0);
+    const firstPrev = new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1);
+    return { inicio: iso(firstPrev), fin: iso(lastPrev) };
+  }
+  const firstCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+  return { inicio: iso(firstCurrent), fin: iso(today) };
+}
+
+function setDefaultDateRange() {
+  const { inicio, fin } = getDefaultDateRange();
+  const ini = document.getElementById('f-fecha-ini');
+  const end = document.getElementById('f-fecha-fin');
+  if (ini) ini.value = inicio;
+  if (end) end.value = fin;
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // EVENT LISTENERS
 // ════════════════════════════════════════════════════════════════════════
 
 function setupEventListeners() {
   // Filters → debounced refresh
-  ['f-supervisor','f-campana','f-estado','f-hora-ini','f-hora-fin'].forEach(id => {
+  ['f-supervisor','f-campana','f-estado','f-hora-ini','f-hora-fin','f-fecha-ini','f-fecha-fin'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', debounce(refreshDashboard, 350));
   });
@@ -178,6 +205,8 @@ function buildQueryParams() {
   add('f-estado',     'estado');
   add('f-hora-ini',   'hora_inicio');
   add('f-hora-fin',   'hora_fin');
+  add('f-fecha-ini',  'fecha_inicio');
+  add('f-fecha-fin',  'fecha_fin');
   return params.toString();
 }
 
@@ -190,6 +219,7 @@ function clearFilters() {
   document.getElementById('search-supervisor').value = '';
   state.advisor.searchName = '';
   state.advisor.searchSup  = '';
+  setDefaultDateRange();
   refreshDashboard();
 }
 
@@ -670,7 +700,7 @@ function renderAdvisorTable() {
   const { filtered, page, pageSize } = state.advisor;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
     renderPagination(0, page, pageSize);
     return;
   }
@@ -686,6 +716,7 @@ function renderAdvisorTable() {
       : neutralBadge('—');
     return `
       <tr>
+        <td class="text-center">${neutralBadge(r.Fecha || '—')}</td>
         <td><strong>${esc(r.Nombre  || '—')}</strong></td>
         <td>${esc(r.Supervisor || '—')}</td>
         <td><span style="font-size:0.78rem;color:#757575">${esc(r.Campana || '—')}</span></td>
@@ -746,6 +777,7 @@ function exportExcel() {
     return;
   }
   const rows = state.advisor.filtered.map(r => ({
+    Fecha:            r.Fecha || '',
     Nombre:           r.Nombre || '',
     Supervisor:       r.Supervisor || '',
     Campaña:          r.Campana || '',
@@ -767,8 +799,9 @@ function exportCSV() {
     showToast('No hay datos para exportar', 'error');
     return;
   }
-  const headers = ['Nombre','Supervisor','Campaña','Hora Programada','Hora Inicio','Tiempo Retardo','Estado'];
+  const headers = ['Fecha','Nombre','Supervisor','Campaña','Hora Programada','Hora Inicio','Tiempo Retardo','Estado'];
   const rows = state.advisor.filtered.map(r => [
+    csvCell(r.Fecha),
     csvCell(r.Nombre),
     csvCell(r.Supervisor),
     csvCell(r.Campana),

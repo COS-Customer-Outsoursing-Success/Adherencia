@@ -60,7 +60,7 @@ def get_cursor():
             conn.close()
 
 
-def execute_query(query: str, params: tuple = ()) -> list[dict]:
+def execute_query(query: str, params: tuple | dict = ()) -> list[dict]:
     with get_cursor() as cur:
         cur.execute(query, params)
         return cur.fetchall()

@@ -28,6 +28,7 @@ const state = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  setDefaultDateRange();
   setupEventListeners();
   loadFilterOptions();
   refreshReport();
@@ -35,11 +36,37 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ════════════════════════════════════════════════════════════════════════
+// RANGO DE FECHAS POR DEFECTO
+// ════════════════════════════════════════════════════════════════════════
+// Primeros 4 días del mes → mes anterior completo. Desde el día 5 → mes
+// actual, de su día 1 a hoy. Debe reflejar utils/daterange.py:default_range().
+
+function getDefaultDateRange() {
+  const today = new Date();
+  const iso = d => d.toISOString().slice(0, 10);
+  if (today.getDate() <= 4) {
+    const lastPrev = new Date(today.getFullYear(), today.getMonth(), 0);
+    const firstPrev = new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1);
+    return { inicio: iso(firstPrev), fin: iso(lastPrev) };
+  }
+  const firstCurrent = new Date(today.getFullYear(), today.getMonth(), 1);
+  return { inicio: iso(firstCurrent), fin: iso(today) };
+}
+
+function setDefaultDateRange() {
+  const { inicio, fin } = getDefaultDateRange();
+  const ini = document.getElementById('f-fecha-ini');
+  const end = document.getElementById('f-fecha-fin');
+  if (ini) ini.value = inicio;
+  if (end) end.value = fin;
+}
+
+// ════════════════════════════════════════════════════════════════════════
 // EVENT LISTENERS
 // ════════════════════════════════════════════════════════════════════════
 
 function setupEventListeners() {
-  ['f-supervisor', 'f-campana'].forEach(id => {
+  ['f-supervisor', 'f-campana', 'f-fecha-ini', 'f-fecha-fin'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', debounce(refreshReport, 250));
   });
@@ -106,8 +133,12 @@ function buildQueryParams() {
   const params = new URLSearchParams();
   const supervisor = document.getElementById('f-supervisor')?.value?.trim();
   const campana    = document.getElementById('f-campana')?.value?.trim();
+  const fechaIni   = document.getElementById('f-fecha-ini')?.value?.trim();
+  const fechaFin   = document.getElementById('f-fecha-fin')?.value?.trim();
   if (supervisor) params.set('supervisor', supervisor);
   if (campana)    params.set('campana', campana);
+  if (fechaIni)   params.set('fecha_inicio', fechaIni);
+  if (fechaFin)   params.set('fecha_fin', fechaFin);
   return params.toString();
 }
 
@@ -171,6 +202,7 @@ function clearFilters() {
   document.getElementById('search-supervisor').value = '';
   state.agente.searchName = '';
   state.agente.searchSup  = '';
+  setDefaultDateRange();
   refreshReport();
 }
 
@@ -346,7 +378,7 @@ function renderAgenteTable() {
   const { filtered, page, pageSize } = state.agente;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="21" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="22" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
     renderPagination(0, page, pageSize);
     return;
   }
@@ -356,6 +388,7 @@ function renderAgenteTable() {
 
   tbody.innerHTML = slice.map(r => `
     <tr>
+      <td class="text-center">${neutralBadge(r.Fecha || '—')}</td>
       <td><strong>${esc(r.Asesor || '—')}</strong></td>
       <td>${esc(r.Supervisor || '—')}</td>
       <td><span style="font-size:0.78rem;color:#757575">${esc(r.Campana || '—')}</span></td>
@@ -416,7 +449,7 @@ function exportExcel() {
     return;
   }
   const rows = state.agente.filtered.map(r => ({
-    Asesor: r.Asesor || '', Supervisor: r.Supervisor || '', Campaña: r.Campana || '',
+    Fecha: r.Fecha || '', Asesor: r.Asesor || '', Supervisor: r.Supervisor || '', Campaña: r.Campana || '',
     T_Logueado: r.T_logueado, Llamadas: r.Llamadas, Llamadas_Inb: r.Llamadas_Inb, Llamadas_Out: r.Llamadas_Out,
     Ventas_Inb: r.Ventas_Inb, Ventas_Out: r.Ventas_Out, T_AHT: r.T_AHT, T_ACW: r.T_ACW, T_Espera: r.T_Espera,
     T_Pausa_Produ: r.T_Pausa_Produ, Cant_Desconex: r.Cant_Desconex, T_Desconex: r.T_Desconex,
@@ -435,9 +468,9 @@ function exportCSV() {
     showToast('No hay datos para exportar', 'error');
     return;
   }
-  const headers = ['Asesor','Supervisor','Campaña','T_Logueado','Llamadas','Llamadas_Inb','Llamadas_Out','Ventas_Inb','Ventas_Out','T_AHT','T_ACW','T_Espera','T_Pausa_Produ','Cant_Desconex','T_Desconex','Pct_Pausa','Pct_Ocupacion','Pct_Disponibilidad','Pct_Utilizacion','Pct_Shrinkage','Pct_Eficiencia'];
+  const headers = ['Fecha','Asesor','Supervisor','Campaña','T_Logueado','Llamadas','Llamadas_Inb','Llamadas_Out','Ventas_Inb','Ventas_Out','T_AHT','T_ACW','T_Espera','T_Pausa_Produ','Cant_Desconex','T_Desconex','Pct_Pausa','Pct_Ocupacion','Pct_Disponibilidad','Pct_Utilizacion','Pct_Shrinkage','Pct_Eficiencia'];
   const rows = state.agente.filtered.map(r => [
-    csvCell(r.Asesor), csvCell(r.Supervisor), csvCell(r.Campana),
+    csvCell(r.Fecha), csvCell(r.Asesor), csvCell(r.Supervisor), csvCell(r.Campana),
     csvCell(r.T_logueado), csvCell(r.Llamadas), csvCell(r.Llamadas_Inb), csvCell(r.Llamadas_Out),
     csvCell(r.Ventas_Inb), csvCell(r.Ventas_Out), csvCell(r.T_AHT), csvCell(r.T_ACW), csvCell(r.T_Espera),
     csvCell(r.T_Pausa_Produ), csvCell(r.Cant_Desconex), csvCell(r.T_Desconex),

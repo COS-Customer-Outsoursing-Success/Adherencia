@@ -64,6 +64,14 @@
         Solo con exceso
       </label>
     </div>
+    <div class="filter-group">
+      <label class="filter-label">Rango de fechas</label>
+      <div class="filter-time-range">
+        <input class="filter-input" type="date" id="f-fecha-ini" aria-label="Fecha desde" />
+        <span class="filter-time-sep">—</span>
+        <input class="filter-input" type="date" id="f-fecha-fin" aria-label="Fecha hasta" />
+      </div>
+    </div>
     <div class="filter-actions">
       <button class="btn-filter-clear" id="btn-clear-filters">Limpiar filtros</button>
     </div>
@@ -245,6 +253,7 @@
       <table class="data-table data-table--sortable" id="agente-table">
         <thead>
           <tr>
+            <th data-col="Fecha" class="sortable text-center">Fecha <span class="sort-icon">↕</span></th>
             <th data-col="Asesor" class="sortable">Asesor <span class="sort-icon">↕</span></th>
             <th data-col="Supervisor" class="sortable">Supervisor <span class="sort-icon">↕</span></th>
             <th data-col="Campana" class="sortable">Campaña <span class="sort-icon">↕</span></th>
@@ -261,7 +270,7 @@
           </tr>
         </thead>
         <tbody id="agente-tbody">
-          <tr><td colspan="13" class="empty-row">Cargando datos…</td></tr>
+          <tr><td colspan="14" class="empty-row">Cargando datos…</td></tr>
         </tbody>
       </table>
     </div>
