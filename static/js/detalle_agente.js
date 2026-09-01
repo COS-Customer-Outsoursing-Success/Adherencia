@@ -61,6 +61,19 @@ function setDefaultDateRange() {
   if (end) end.value = fin;
 }
 
+// El atributo min="2026-08-01" del input solo restringe el calendario visual;
+// no impide teclear una fecha manualmente. Se recorta también aquí para que
+// la consulta y lo que se ve en el input nunca queden por debajo del histórico
+// disponible (debe reflejar utils/daterange.py:MIN_AVAILABLE_DATE).
+const MIN_AVAILABLE_DATE = '2026-08-01';
+
+function clampDateFilters() {
+  const ini = document.getElementById('f-fecha-ini');
+  const fin = document.getElementById('f-fecha-fin');
+  if (ini && ini.value && ini.value < MIN_AVAILABLE_DATE) ini.value = MIN_AVAILABLE_DATE;
+  if (fin && fin.value && fin.value < MIN_AVAILABLE_DATE) fin.value = MIN_AVAILABLE_DATE;
+}
+
 // ════════════════════════════════════════════════════════════════════════
 // EVENT LISTENERS
 // ════════════════════════════════════════════════════════════════════════
@@ -130,6 +143,7 @@ function setupEventListeners() {
 // ════════════════════════════════════════════════════════════════════════
 
 function buildQueryParams() {
+  clampDateFilters();
   const params = new URLSearchParams();
   const supervisor = document.getElementById('f-supervisor')?.value?.trim();
   const campana    = document.getElementById('f-campana')?.value?.trim();
