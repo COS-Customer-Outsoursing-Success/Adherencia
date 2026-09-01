@@ -189,6 +189,37 @@ def get_supervisor_summary(data: list[dict] | None = None) -> list[dict]:
     return result
 
 
+def get_advisor_summary(data: list[dict] | None = None) -> list[dict]:
+    """Resumen por asesor: una fila por asesor con sus totales del rango de
+    fechas, en vez de una fila por cada día programado (mismo criterio que
+    get_supervisor_summary, pero agrupado por asesor)."""
+    if data is None:
+        data = get_raw_data()
+    acc: dict[str, dict] = {}
+    for r in data:
+        nombre = r["Nombre"] or "Sin nombre"
+        if nombre not in acc:
+            acc[nombre] = {
+                "Nombre": nombre, "Supervisor": r["Supervisor"], "Campana": r["Campana"],
+                "programados": 0, "asistieron": 0, "ausentes": 0, "retardos": 0,
+            }
+        acc[nombre]["programados"] += 1
+        if r["Asiste"]  == 1: acc[nombre]["asistieron"] += 1
+        if r["Ausente"] == 1: acc[nombre]["ausentes"]   += 1
+        if r["Retardo"] == 1: acc[nombre]["retardos"]   += 1
+
+    result = []
+    for stats in acc.values():
+        p = stats["programados"]
+        stats["pct_ausentismo"] = safe_pct(stats["ausentes"],   p)
+        stats["pct_retardo"]    = safe_pct(stats["retardos"],   p)
+        stats["pct_asistencia"] = safe_pct(stats["asistieron"], p)
+        result.append(stats)
+
+    result.sort(key=lambda x: x["pct_ausentismo"], reverse=True)
+    return result
+
+
 def get_timeline(data: list[dict] | None = None) -> dict:
     """Agrupa las llegadas en intervalos fijos de 30 minutos (rellenando con 0
     los intervalos sin llegadas, para que la línea de tiempo sea continua)."""
@@ -315,6 +346,7 @@ def get_full_dashboard(filters: dict | None = None) -> dict:
     return {
         "kpis":        get_kpis(data),
         "supervisors": get_supervisor_summary(data),
+        "advisors":    get_advisor_summary(data),
         "attendance":  data,
         "timeline":    get_timeline(data),
         "ausentismo":  get_ausentismo(data),

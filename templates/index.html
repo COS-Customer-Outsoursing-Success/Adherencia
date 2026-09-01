@@ -411,18 +411,20 @@
       <table class="data-table data-table--sortable" id="advisor-table">
         <thead>
           <tr>
-            <th data-col="Fecha" class="sortable text-center">Fecha <span class="sort-icon">↕</span></th>
             <th data-col="Nombre" class="sortable">Nombre <span class="sort-icon">↕</span></th>
             <th data-col="Supervisor" class="sortable">Supervisor <span class="sort-icon">↕</span></th>
             <th data-col="Campana" class="sortable">Campaña <span class="sort-icon">↕</span></th>
-            <th data-col="Hora_Programada" class="sortable text-center">H. Programada <span class="sort-icon">↕</span></th>
-            <th data-col="Hora_Inicio" class="sortable text-center">H. Inicio <span class="sort-icon">↕</span></th>
-            <th data-col="Tiempo_Retardo" class="sortable text-center">T. Retardo <span class="sort-icon">↕</span></th>
-            <th class="text-center">Estado</th>
+            <th data-col="programados" class="sortable text-center">Programados <span class="sort-icon">↕</span></th>
+            <th data-col="asistieron" class="sortable text-center">Asistieron <span class="sort-icon">↕</span></th>
+            <th data-col="ausentes" class="sortable text-center">Ausentes <span class="sort-icon">↕</span></th>
+            <th data-col="retardos" class="sortable text-center">Retardos <span class="sort-icon">↕</span></th>
+            <th data-col="pct_ausentismo" class="sortable text-center">% Ausentismo <span class="sort-icon">↕</span></th>
+            <th data-col="pct_retardo" class="sortable text-center">% Retardo <span class="sort-icon">↕</span></th>
+            <th data-col="pct_asistencia" class="sortable text-center">% Asistencia <span class="sort-icon">↕</span></th>
           </tr>
         </thead>
         <tbody id="advisor-tbody">
-          <tr><td colspan="8" class="empty-row">Cargando datos…</td></tr>
+          <tr><td colspan="10" class="empty-row">Cargando datos…</td></tr>
         </tbody>
       </table>
     </div>
@@ -452,7 +454,7 @@
 <!-- SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Dashboard logic -->
-<script src="/static/js/dashboard.js?v=20260901b"></script>
+<script src="/static/js/dashboard.js?v=20260901c"></script>
 
 </body>
 </html>

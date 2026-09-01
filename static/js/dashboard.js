@@ -308,7 +308,7 @@ function updateAll(data) {
   updateAusentismo(data.ausentismo);
   updateRetardos(data.retardos);
 
-  state.advisor.data = data.attendance || [];
+  state.advisor.data = data.advisors || [];
   applyAdvisorFilters();
   renderAdvisorTable();
 
@@ -774,7 +774,7 @@ function renderAdvisorTable() {
   const { filtered, page, pageSize } = state.advisor;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
     renderPagination(0, page, pageSize);
     return;
   }
@@ -782,39 +782,21 @@ function renderAdvisorTable() {
   const start  = (page - 1) * pageSize;
   const slice  = filtered.slice(start, start + pageSize);
 
-  tbody.innerHTML = slice.map(r => {
-    const badge = getStatusBadge(r);
-    const tieneRetardo = r.Tiempo_Retardo && r.Tiempo_Retardo !== '00:00:00';
-    const retardoCell = tieneRetardo
-      ? timeBadge(hhmmssToSeconds(r.Tiempo_Retardo), r.Tiempo_Retardo, 300, 900)
-      : neutralBadge('—');
-    return `
+  tbody.innerHTML = slice.map(r => `
       <tr>
-        <td class="text-center">${neutralBadge(r.Fecha || '—')}</td>
         <td><strong>${esc(r.Nombre  || '—')}</strong></td>
         <td>${esc(r.Supervisor || '—')}</td>
         <td><span style="font-size:0.78rem;color:#757575">${esc(r.Campana || '—')}</span></td>
-        <td class="text-center">${neutralBadge(r.Hora_Programada || '—')}</td>
-        <td class="text-center">${neutralBadge(r.Hora_Inicio && r.Hora_Inicio !== '00:00:00' ? r.Hora_Inicio : '—')}</td>
-        <td class="text-center">${retardoCell}</td>
-        <td class="text-center">${badge}</td>
-      </tr>`;
-  }).join('');
+        <td class="text-center">${r.programados}</td>
+        <td class="text-center">${r.asistieron}</td>
+        <td class="text-center">${r.ausentes}</td>
+        <td class="text-center">${r.retardos}</td>
+        <td class="text-center">${pctBadge(r.pct_ausentismo, 5, 10)}</td>
+        <td class="text-center">${pctBadge(r.pct_retardo, 8, 15)}</td>
+        <td class="text-center">${pctBadge(r.pct_asistencia, 80, 60, true)}</td>
+      </tr>`).join('');
 
   renderPagination(filtered.length, page, pageSize);
-}
-
-function getStatusBadge(r) {
-  if (r.Ausente === 1) {
-    return '<span class="badge badge--red">❌ Ausente</span>';
-  }
-  if (r.Retardo === 1) {
-    return '<span class="badge badge--yellow">🟡 Retardo</span>';
-  }
-  if (r.Asiste === 1) {
-    return '<span class="badge badge--green">✅ Asistió</span>';
-  }
-  return '<span class="badge">— Pendiente</span>';
 }
 
 function renderPagination(total, page, pageSize) {
@@ -851,14 +833,16 @@ function exportExcel() {
     return;
   }
   const rows = state.advisor.filtered.map(r => ({
-    Fecha:            r.Fecha || '',
-    Nombre:           r.Nombre || '',
-    Supervisor:       r.Supervisor || '',
-    Campaña:          r.Campana || '',
-    Hora_Programada:  r.Hora_Programada || '',
-    Hora_Inicio:      r.Hora_Inicio || '',
-    Tiempo_Retardo:   r.Tiempo_Retardo || '',
-    Estado:           getEstadoTexto(r),
+    Nombre:          r.Nombre || '',
+    Supervisor:      r.Supervisor || '',
+    Campaña:         r.Campana || '',
+    Programados:     r.programados,
+    Asistieron:      r.asistieron,
+    Ausentes:        r.ausentes,
+    Retardos:        r.retardos,
+    Pct_Ausentismo:  r.pct_ausentismo,
+    Pct_Retardo:     r.pct_retardo,
+    Pct_Asistencia:  r.pct_asistencia,
   }));
 
   const ws  = XLSX.utils.json_to_sheet(rows);
@@ -873,16 +857,18 @@ function exportCSV() {
     showToast('No hay datos para exportar', 'error');
     return;
   }
-  const headers = ['Fecha','Nombre','Supervisor','Campaña','Hora Programada','Hora Inicio','Tiempo Retardo','Estado'];
+  const headers = ['Nombre','Supervisor','Campaña','Programados','Asistieron','Ausentes','Retardos','% Ausentismo','% Retardo','% Asistencia'];
   const rows = state.advisor.filtered.map(r => [
-    csvCell(r.Fecha),
     csvCell(r.Nombre),
     csvCell(r.Supervisor),
     csvCell(r.Campana),
-    csvCell(r.Hora_Programada),
-    csvCell(r.Hora_Inicio),
-    csvCell(r.Tiempo_Retardo),
-    csvCell(getEstadoTexto(r)),
+    csvCell(r.programados),
+    csvCell(r.asistieron),
+    csvCell(r.ausentes),
+    csvCell(r.retardos),
+    csvCell(r.pct_ausentismo),
+    csvCell(r.pct_retardo),
+    csvCell(r.pct_asistencia),
   ].join(','));
 
   const content = [headers.join(','), ...rows].join('\n');
@@ -893,13 +879,6 @@ function exportCSV() {
   a.click();
   URL.revokeObjectURL(url);
   showToast('Exportado a CSV correctamente', 'ok');
-}
-
-function getEstadoTexto(r) {
-  if (r.Ausente === 1) return 'Ausente';
-  if (r.Retardo === 1) return 'Retardo';
-  if (r.Asiste  === 1) return 'Asistió';
-  return 'Pendiente';
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -994,13 +973,6 @@ function truncate(str, len) {
 }
 
 // ── Formato condicional (badges de color + icono) ────────────────────────
-
-function hhmmssToSeconds(str) {
-  if (!str) return 0;
-  const parts = str.split(':').map(Number);
-  const [h = 0, m = 0, s = 0] = parts;
-  return (h * 3600) + (m * 60) + s;
-}
 
 function timeBadge(seconds, str, warnAt, dangerAt) {
   let level = 'ok', icon = '✅';
