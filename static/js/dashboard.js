@@ -774,7 +774,7 @@ function renderAdvisorTable() {
   const { filtered, page, pageSize } = state.advisor;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
     renderPagination(0, page, pageSize);
     return;
   }
@@ -784,6 +784,7 @@ function renderAdvisorTable() {
 
   tbody.innerHTML = slice.map(r => `
       <tr>
+        <td>${esc(r.Cedula || '—')}</td>
         <td><strong>${esc(r.Nombre  || '—')}</strong></td>
         <td>${esc(r.Supervisor || '—')}</td>
         <td><span style="font-size:0.78rem;color:#757575">${esc(r.Campana || '—')}</span></td>
@@ -833,6 +834,7 @@ function exportExcel() {
     return;
   }
   const rows = state.advisor.filtered.map(r => ({
+    Cedula:          r.Cedula || '',
     Nombre:          r.Nombre || '',
     Supervisor:      r.Supervisor || '',
     Campaña:         r.Campana || '',
@@ -857,8 +859,9 @@ function exportCSV() {
     showToast('No hay datos para exportar', 'error');
     return;
   }
-  const headers = ['Nombre','Supervisor','Campaña','Programados','Asistieron','Ausentes','Retardos','% Ausentismo','% Retardo','% Asistencia'];
+  const headers = ['Cedula','Nombre','Supervisor','Campaña','Programados','Asistieron','Ausentes','Retardos','% Ausentismo','% Retardo','% Asistencia'];
   const rows = state.advisor.filtered.map(r => [
+    csvCell(r.Cedula),
     csvCell(r.Nombre),
     csvCell(r.Supervisor),
     csvCell(r.Campana),

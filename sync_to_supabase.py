@@ -40,6 +40,7 @@ def sync_attendance(fecha: str) -> int:
     payload = [
         {
             "fecha": fecha,
+            "cedula": r.get("Cedula"),
             "nombre": r.get("Nombre"),
             "supervisor": r.get("Supervisor"),
             "campana": r.get("Campana"),

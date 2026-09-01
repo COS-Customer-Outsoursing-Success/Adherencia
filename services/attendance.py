@@ -24,6 +24,7 @@ SERVICIOS = (
 
 _BASE_SQL = """
 SELECT
+    HC.documento                  AS Cedula,
     HC.Nombres_Apellidos          AS Nombre,
     HC.Nombre_Supervisor          AS Supervisor,
     CASE HC.Servicio
@@ -64,6 +65,7 @@ WHERE HC.Servicio IN ({placeholders})
 _SNAPSHOT_SQL = """
 SELECT
     fecha            AS "Fecha",
+    cedula           AS "Cedula",
     nombre           AS "Nombre",
     supervisor       AS "Supervisor",
     campana          AS "Campana",
@@ -91,6 +93,7 @@ def _serialize_row(row: dict) -> dict:
         "Hora_Inicio":     td_to_str(row.get("Hora_Inicio")),
         "Tiempo_Retardo":  td_to_str(row.get("Tiempo_Retardo")),
         "Fecha":           date_to_str(row.get("Fecha")),
+        "Cedula":          str(row["Cedula"]) if row.get("Cedula") is not None else None,
     }
 
 
@@ -200,7 +203,8 @@ def get_advisor_summary(data: list[dict] | None = None) -> list[dict]:
         nombre = r["Nombre"] or "Sin nombre"
         if nombre not in acc:
             acc[nombre] = {
-                "Nombre": nombre, "Supervisor": r["Supervisor"], "Campana": r["Campana"],
+                "Nombre": nombre, "Cedula": r.get("Cedula"),
+                "Supervisor": r["Supervisor"], "Campana": r["Campana"],
                 "programados": 0, "asistieron": 0, "ausentes": 0, "retardos": 0,
             }
         acc[nombre]["programados"] += 1
