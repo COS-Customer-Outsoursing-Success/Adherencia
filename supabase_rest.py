@@ -150,3 +150,21 @@ def fetch_agent_metrics(fecha_inicio: str, fecha_fin: str) -> list[dict]:
     resp = requests.get(url, headers=headers, params=params, timeout=30)
     resp.raise_for_status()
     return resp.json()
+
+
+def fetch_tyt_sales(fecha_inicio: str, fecha_fin: str) -> list[dict]:
+    """Obtiene las ventas TyT diarias por asesor usando la API REST."""
+    url = f"{Config.SUPABASE_URL}/rest/v1/tyt_sales_snapshot"
+    headers = _headers()
+    headers.pop("Prefer", None)
+
+    params = [
+        ("select", "Asesor:nombre,Terminales:terminales,Tecnologia:tecnologia,Unidades:unidades,"
+                   "Dolar_Terminales:dolar_terminales,Dolar_Tecnologia:dolar_tecnologia,Dolar_Total:dolar_total"),
+        ("fecha", f"gte.{fecha_inicio}"),
+        ("fecha", f"lte.{fecha_fin}"),
+    ]
+
+    resp = requests.get(url, headers=headers, params=params, timeout=30)
+    resp.raise_for_status()
+    return resp.json()

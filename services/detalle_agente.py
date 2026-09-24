@@ -7,55 +7,31 @@ from datetime import datetime
 
 import supabase_db
 import supabase_rest
-from config import Config
-from services._queries import AGENT_METRICS_SNAPSHOT_SQL
+from services._queries import AGENT_METRICS_SNAPSHOT_SQL, TYT_SALES_SNAPSHOT_SQL
 from utils.daterange import resolve_date_range
 from utils.formatters import date_to_str, safe_pct, seconds_to_hhmmss
 
 logger = logging.getLogger(__name__)
 
 def fetch_tyt_data(fecha_inicio: str, fecha_fin: str) -> dict:
-    import mysql.connector
-    
-    query = """
-    SELECT 
-        HC.Nombres_Apellidos as Asesor,
-        SUM(CASE WHEN V.tipo5 = 'Terminal' THEN 1 ELSE 0 END) as Terminales,
-        SUM(CASE WHEN V.tipo5 = 'Tecnologia' THEN 1 ELSE 0 END) as Tecnologia,
-        COUNT(*) as Unidades,
-        SUM(CASE WHEN V.tipo5 = 'Terminal' THEN CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2)) ELSE 0 END) as Dolar_Terminales,
-        SUM(CASE WHEN V.tipo5 = 'Tecnologia' THEN CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2)) ELSE 0 END) as Dolar_Tecnologia,
-        SUM(CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2))) as Dolar_Total
-    FROM bbdd_cs_bog_claro_terminales_tecnologia.tb_soul2_720_venta_de_terminales_y_tecnologia_bogota V
-    JOIN bbdd_cs_bog_tmk.tb_headcount_dts HC ON V.Documento = HC.Documento
-    WHERE V.created_at >= %s AND V.created_at < %s + INTERVAL 1 DAY
-    GROUP BY HC.Nombres_Apellidos
-    """
-    
-    if not Config.TYT_DB_HOST:
-        logger.warning("TYT_DB_HOST no configurado; se omiten los datos TyT")
+    """Ventas TyT acumuladas por asesor en el rango, leídas del snapshot en Supabase."""
+    try:
+        try:
+            rows = supabase_db.execute_query(TYT_SALES_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+        except Exception as e:
+            logger.warning(f"Error con conexión Postgres directa en ventas TyT: {e}. Reintentando con API REST...")
+            rows = supabase_rest.fetch_tyt_sales(fecha_inicio, fecha_fin)
+    except Exception as e:
+        logger.error(f"Error obteniendo ventas TyT: {e}")
         return {}
 
-    conn = None
-    cursor = None
-    try:
-        conn = mysql.connector.connect(
-            host=Config.TYT_DB_HOST,
-            port=Config.TYT_DB_PORT,
-            user=Config.TYT_DB_USERNAME,
-            password=Config.TYT_DB_PASSWORD,
-            connection_timeout=10,
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(query, (fecha_inicio, fecha_fin))
-        rows = cursor.fetchall()
-        return {r["Asesor"]: r for r in rows}
-    except Exception as e:
-        logger.error(f"Error fetching TyT data: {e}")
-        return {}
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+    # La vía REST trae una fila por día: se acumula por asesor.
+    result: dict[str, dict] = {}
+    for r in rows:
+        ag = result.setdefault(r["Asesor"], {"Asesor": r["Asesor"]})
+        for k in ("Terminales", "Tecnologia", "Unidades", "Dolar_Terminales", "Dolar_Tecnologia", "Dolar_Total"):
+            ag[k] = ag.get(k, 0) + float(r.get(k) or 0)
+    return result
 
 
 def _day_frac_to_seconds(value) -> float:

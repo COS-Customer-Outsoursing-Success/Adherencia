@@ -38,6 +38,38 @@ FROM agent_metrics_snapshot
 WHERE fecha BETWEEN %s AND %s
 """
 
+# ── Ventas TyT acumuladas por asesor en el rango (Detalle de Asesores) ──
+TYT_SALES_SNAPSHOT_SQL = """
+SELECT
+    nombre                 AS "Asesor",
+    SUM(terminales)        AS "Terminales",
+    SUM(tecnologia)        AS "Tecnologia",
+    SUM(unidades)          AS "Unidades",
+    SUM(dolar_terminales)  AS "Dolar_Terminales",
+    SUM(dolar_tecnologia)  AS "Dolar_Tecnologia",
+    SUM(dolar_total)       AS "Dolar_Total"
+FROM tyt_sales_snapshot
+WHERE fecha BETWEEN %s AND %s
+GROUP BY nombre
+"""
+
+
+# ── Ventas TyT de un día desde MySQL corporativo (usada solo por sync_to_supabase.py) ──
+TYT_SALES_SQL = """
+SELECT
+    HC.Nombres_Apellidos AS Asesor,
+    SUM(CASE WHEN V.tipo5 = 'Terminal' THEN 1 ELSE 0 END) AS Terminales,
+    SUM(CASE WHEN V.tipo5 = 'Tecnologia' THEN 1 ELSE 0 END) AS Tecnologia,
+    COUNT(*) AS Unidades,
+    SUM(CASE WHEN V.tipo5 = 'Terminal' THEN CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2)) ELSE 0 END) AS Dolar_Terminales,
+    SUM(CASE WHEN V.tipo5 = 'Tecnologia' THEN CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2)) ELSE 0 END) AS Dolar_Tecnologia,
+    SUM(CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2))) AS Dolar_Total
+FROM bbdd_cs_bog_claro_terminales_tecnologia.tb_soul2_720_venta_de_terminales_y_tecnologia_bogota V
+JOIN bbdd_cs_bog_tmk.tb_headcount_dts HC ON V.Documento = HC.Documento
+WHERE V.created_at >= %(fecha)s AND V.created_at < %(fecha)s + INTERVAL 1 DAY
+GROUP BY HC.Nombres_Apellidos
+"""
+
 
 # ── Lectura desde MySQL corporativo (usada solo por sync_to_supabase.py) ──
 AGENT_METRICS_SQL = """

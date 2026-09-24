@@ -13,6 +13,7 @@ no tiene esa restricción y sigue leyendo por conexión directa (supabase_db.py)
 Sincroniza dos conjuntos de datos independientes:
   - attendance_snapshot    -> usado por el dashboard de Ausentismo/Retardos
   - agent_metrics_snapshot -> usado por Excesos y Detalle de Agente
+  - tyt_sales_snapshot     -> columnas TyT de Detalle de Agente
 """
 from __future__ import annotations
 
@@ -22,7 +23,7 @@ from datetime import date
 
 import supabase_rest
 from database import execute_query
-from services._queries import AGENT_METRICS_SQL
+from services._queries import AGENT_METRICS_SQL, TYT_SALES_SQL
 from services.attendance import get_raw_data_from_mysql
 
 logging.basicConfig(
@@ -106,6 +107,31 @@ def sync_agent_metrics(fecha: str) -> int:
     return len(rows)
 
 
+def sync_tyt_sales(fecha: str) -> int:
+    logger.info("Consultando ventas TyT del %s en el MySQL corporativo...", fecha)
+    rows = execute_query(TYT_SALES_SQL, {"fecha": fecha})
+    logger.info("%d filas obtenidas de MySQL (tyt_sales)", len(rows))
+
+    payload = [
+        {
+            "fecha": fecha,
+            "nombre": r.get("Asesor"),
+            "terminales": int(r.get("Terminales") or 0),
+            "tecnologia": int(r.get("Tecnologia") or 0),
+            "unidades": int(r.get("Unidades") or 0),
+            "dolar_terminales": r.get("Dolar_Terminales") or 0,
+            "dolar_tecnologia": r.get("Dolar_Tecnologia") or 0,
+            "dolar_total": r.get("Dolar_Total") or 0,
+        }
+        for r in rows
+        if r.get("Asesor")
+    ]
+    supabase_rest.replace_by_date("tyt_sales_snapshot", fecha, payload)
+
+    logger.info("Sincronización tyt_sales completa (%s): %d filas escritas en Supabase", fecha, len(payload))
+    return len(payload)
+
+
 def sync(fecha: str | None = None) -> dict:
     """Sincroniza un día puntual (por defecto, hoy). Solo reemplaza las filas de
     ese día en Supabase, preservando el histórico de otras fechas."""
@@ -123,6 +149,12 @@ def sync(fecha: str | None = None) -> dict:
     except Exception:
         logger.exception("Error sincronizando métricas de agentes")
         results["agent_metrics"] = None
+
+    try:
+        results["tyt_sales"] = sync_tyt_sales(fecha)
+    except Exception:
+        logger.exception("Error sincronizando ventas TyT")
+        results["tyt_sales"] = None
 
     return results
 
