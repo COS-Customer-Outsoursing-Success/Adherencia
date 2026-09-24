@@ -6,11 +6,56 @@ import random
 from datetime import datetime
 
 import supabase_db
+import supabase_rest
+from config import Config
 from services._queries import AGENT_METRICS_SNAPSHOT_SQL
 from utils.daterange import resolve_date_range
 from utils.formatters import date_to_str, safe_pct, seconds_to_hhmmss
 
 logger = logging.getLogger(__name__)
+
+def fetch_tyt_data(fecha_inicio: str, fecha_fin: str) -> dict:
+    import mysql.connector
+    
+    query = """
+    SELECT 
+        HC.Nombres_Apellidos as Asesor,
+        SUM(CASE WHEN V.tipo5 = 'Terminal' THEN 1 ELSE 0 END) as Terminales,
+        SUM(CASE WHEN V.tipo5 = 'Tecnologia' THEN 1 ELSE 0 END) as Tecnologia,
+        COUNT(*) as Unidades,
+        SUM(CASE WHEN V.tipo5 = 'Terminal' THEN CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2)) ELSE 0 END) as Dolar_Terminales,
+        SUM(CASE WHEN V.tipo5 = 'Tecnologia' THEN CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2)) ELSE 0 END) as Dolar_Tecnologia,
+        SUM(CAST(REPLACE(V.valor2, ',', '') AS DECIMAL(15,2))) as Dolar_Total
+    FROM bbdd_cs_bog_claro_terminales_tecnologia.tb_soul2_720_venta_de_terminales_y_tecnologia_bogota V
+    JOIN bbdd_cs_bog_tmk.tb_headcount_dts HC ON V.Documento = HC.Documento
+    WHERE V.created_at >= %s AND V.created_at < %s + INTERVAL 1 DAY
+    GROUP BY HC.Nombres_Apellidos
+    """
+    
+    if not Config.TYT_DB_HOST:
+        logger.warning("TYT_DB_HOST no configurado; se omiten los datos TyT")
+        return {}
+
+    conn = None
+    cursor = None
+    try:
+        conn = mysql.connector.connect(
+            host=Config.TYT_DB_HOST,
+            port=Config.TYT_DB_PORT,
+            user=Config.TYT_DB_USERNAME,
+            password=Config.TYT_DB_PASSWORD,
+            connection_timeout=10,
+        )
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(query, (fecha_inicio, fecha_fin))
+        rows = cursor.fetchall()
+        return {r["Asesor"]: r for r in rows}
+    except Exception as e:
+        logger.error(f"Error fetching TyT data: {e}")
+        return {}
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 
 def _day_frac_to_seconds(value) -> float:
@@ -134,7 +179,12 @@ def get_raw_data(filters: dict | None = None) -> list[dict]:
         rows = _mock_raw_rows()
     else:
         fecha_inicio, fecha_fin = resolve_date_range(filters)
-        rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+        try:
+            rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+        except Exception as e:
+            logger.warning(f"Error con conexión Postgres directa en detalle_agente: {e}. Reintentando con API REST...")
+            rows = supabase_rest.fetch_agent_metrics(fecha_inicio, fecha_fin)
+
     built = [_build_row(r) for r in rows]
     return _apply_filters(built, filters)
 
@@ -183,9 +233,111 @@ def get_kpis(data: list[dict] | None = None) -> dict:
 
 def get_full_report(filters: dict | None = None) -> dict:
     data = get_raw_data(filters)
+    
+    agent_map = {}
+    for r in data:
+        key = (r["Asesor"], r["Supervisor"], r["Campana"])
+        if key not in agent_map:
+            agent_map[key] = {
+                "Asesor": r["Asesor"],
+                "Supervisor": r["Supervisor"],
+                "Campana": r["Campana"],
+                "count": 0,
+                "T_logueado_seg": 0,
+                "Llamadas": 0,
+                "Llamadas_Inb": 0,
+                "Llamadas_Out": 0,
+                "Ventas_Inb": 0,
+                "Ventas_Out": 0,
+                "T_AHT_seg": 0,
+                "T_ACW_seg": 0,
+                "T_Espera_seg": 0,
+                "T_Pausa_Produ_seg": 0,
+                "Cant_Desconex": 0,
+                "T_Desconex_seg": 0,
+                "Pct_Pausa": 0,
+                "Pct_Ocupacion": 0,
+                "Pct_Disponibilidad": 0,
+                "Pct_Utilizacion": 0,
+                "Pct_Shrinkage": 0,
+                "Pct_Eficiencia": 0,
+            }
+        
+        ag = agent_map[key]
+        ag["count"] += 1
+        
+        ag["T_logueado_seg"] += r["T_logueado_seg"]
+        ag["Llamadas"] += r["Llamadas"]
+        ag["Llamadas_Inb"] += r["Llamadas_Inb"]
+        ag["Llamadas_Out"] += r["Llamadas_Out"]
+        ag["Ventas_Inb"] += r["Ventas_Inb"]
+        ag["Ventas_Out"] += r["Ventas_Out"]
+        
+        ag["T_AHT_seg"] += r["T_AHT_seg"]
+        ag["T_ACW_seg"] += r["T_ACW_seg"]
+        ag["T_Espera_seg"] += r["T_Espera_seg"]
+        ag["T_Pausa_Produ_seg"] += r["T_Pausa_Produ_seg"]
+        ag["Cant_Desconex"] += r["Cant_Desconex"]
+        ag["T_Desconex_seg"] += r["T_Desconex_seg"]
+        
+        ag["Pct_Pausa"] += r["Pct_Pausa"]
+        ag["Pct_Ocupacion"] += r["Pct_Ocupacion"]
+        ag["Pct_Disponibilidad"] += r["Pct_Disponibilidad"]
+        ag["Pct_Utilizacion"] += r["Pct_Utilizacion"]
+        ag["Pct_Shrinkage"] += r["Pct_Shrinkage"]
+        ag["Pct_Eficiencia"] += r["Pct_Eficiencia"]
+
+    fecha_inicio, fecha_fin = resolve_date_range(filters or {})
+    fecha_str = f"{fecha_inicio} a {fecha_fin}" if fecha_inicio != fecha_fin else fecha_inicio
+
+    is_tyt = (filters or {}).get("campana") == "Claro - Terminales & Tecnologia Bogota"
+    tyt_data = {}
+    if is_tyt:
+        tyt_data = fetch_tyt_data(fecha_inicio, fecha_fin)
+
+    agentes_agrupados = []
+    for ag in agent_map.values():
+        c = ag["count"]
+        ag["Fecha"] = fecha_str
+        
+        ag["T_logueado"] = seconds_to_hhmmss(ag["T_logueado_seg"])
+        
+        ag["T_AHT_seg"] = ag["T_AHT_seg"] / c if c > 0 else 0
+        ag["T_AHT"] = seconds_to_hhmmss(ag["T_AHT_seg"])
+        
+        ag["T_ACW"] = seconds_to_hhmmss(ag["T_ACW_seg"])
+        ag["T_Espera"] = seconds_to_hhmmss(ag["T_Espera_seg"])
+        ag["T_Pausa_Produ"] = seconds_to_hhmmss(ag["T_Pausa_Produ_seg"])
+        
+        ag["T_Desconex_seg"] = ag["T_Desconex_seg"] / c if c > 0 else 0
+        ag["T_Desconex"] = seconds_to_hhmmss(ag["T_Desconex_seg"])
+        
+        ag["Pct_Pausa"] = round(ag["Pct_Pausa"] / c, 1) if c > 0 else 0
+        ag["Pct_Ocupacion"] = round(ag["Pct_Ocupacion"] / c, 1) if c > 0 else 0
+        ag["Pct_Disponibilidad"] = round(ag["Pct_Disponibilidad"] / c, 1) if c > 0 else 0
+        ag["Pct_Utilizacion"] = round(ag["Pct_Utilizacion"] / c, 1) if c > 0 else 0
+        ag["Pct_Shrinkage"] = round(ag["Pct_Shrinkage"] / c, 1) if c > 0 else 0
+        ag["Pct_Eficiencia"] = round(ag["Pct_Eficiencia"] / c, 1) if c > 0 else 0
+        
+        if is_tyt:
+            tyt = tyt_data.get(ag["Asesor"], {})
+            unidades = float(tyt.get("Unidades", 0) or 0)
+            ag["TyT_Terminales"] = int(tyt.get("Terminales", 0) or 0)
+            ag["TyT_Tecnologia"] = int(tyt.get("Tecnologia", 0) or 0)
+            ag["TyT_Unidades"] = int(unidades)
+            ag["TyT_Efect_Grl"] = round(unidades / ag["Llamadas"], 4) if ag["Llamadas"] > 0 else 0
+            ag["TyT_Dolar_Terminales"] = float(tyt.get("Dolar_Terminales", 0) or 0)
+            ag["TyT_Dolar_Tecnologia"] = float(tyt.get("Dolar_Tecnologia", 0) or 0)
+            ag["TyT_Dolar_Total"] = float(tyt.get("Dolar_Total", 0) or 0)
+            
+        del ag["count"]
+        agentes_agrupados.append(ag)
+
+    agentes_agrupados.sort(key=lambda x: x["Asesor"])
+
     return {
         "kpis": get_kpis(data),
-        "agentes": data,
+        "agentes": agentes_agrupados,
         "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "total_records": len(data),
+        "total_records": len(agentes_agrupados),
     }

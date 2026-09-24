@@ -12,6 +12,12 @@ class Config:
     DB_USERNAME = os.getenv("DB_USERNAME", "")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
+    # ── MySQL de Terminales & Tecnología (ventas TyT en Detalle de Asesores) ─
+    TYT_DB_HOST = os.getenv("TYT_DB_HOST", "")
+    TYT_DB_PORT = int(os.getenv("TYT_DB_PORT", "3306"))
+    TYT_DB_USERNAME = os.getenv("TYT_DB_USERNAME", "")
+    TYT_DB_PASSWORD = os.getenv("TYT_DB_PASSWORD", "")
+
     # ── Supabase / Postgres (destino, usada por la app Flask) ───────────────
     SUPABASE_DB_HOST = os.getenv("SUPABASE_DB_HOST", "")
     SUPABASE_DB_PORT = int(os.getenv("SUPABASE_DB_PORT", "5432"))

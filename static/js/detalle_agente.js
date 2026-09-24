@@ -449,8 +449,15 @@ function renderAgenteTable() {
   const tbody = document.getElementById('agente-tbody');
   const { filtered, page, pageSize } = state.agente;
 
+  const campanaSelect = document.getElementById('f-campana');
+  const isTyT = campanaSelect && campanaSelect.value === "Claro - Terminales & Tecnologia Bogota";
+  document.querySelectorAll('.col-tyt').forEach(el => {
+    el.style.display = isTyT ? '' : 'none';
+  });
+
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="22" class="empty-row">Sin resultados para los filtros aplicados</td></tr>';
+    const colspan = isTyT ? 29 : 22;
+    tbody.innerHTML = `<tr><td colspan="${colspan}" class="empty-row">Sin resultados para los filtros aplicados</td></tr>`;
     renderPagination(0, page, pageSize);
     return;
   }
@@ -470,6 +477,13 @@ function renderAgenteTable() {
       <td class="text-center">${r.Llamadas_Out}</td>
       <td class="text-center">${r.Ventas_Inb}</td>
       <td class="text-center">${r.Ventas_Out}</td>
+      <td class="text-center col-tyt" style="display:${isTyT ? '' : 'none'};">${r.TyT_Terminales || 0}</td>
+      <td class="text-center col-tyt" style="display:${isTyT ? '' : 'none'};">${r.TyT_Tecnologia || 0}</td>
+      <td class="text-center col-tyt" style="display:${isTyT ? '' : 'none'};">${r.TyT_Unidades || 0}</td>
+      <td class="text-center col-tyt" style="display:${isTyT ? '' : 'none'};">${r.TyT_Efect_Grl ? (r.TyT_Efect_Grl * 100).toFixed(2) + '%' : '0.00%'}</td>
+      <td class="text-center col-tyt" style="display:${isTyT ? '' : 'none'};">$${(r.TyT_Dolar_Terminales || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+      <td class="text-center col-tyt" style="display:${isTyT ? '' : 'none'};">$${(r.TyT_Dolar_Tecnologia || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+      <td class="text-center col-tyt" style="display:${isTyT ? '' : 'none'};">$${(r.TyT_Dolar_Total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
       <td class="text-center">${neutralBadge(r.T_AHT)}</td>
       <td class="text-center">${neutralBadge(r.T_ACW)}</td>
       <td class="text-center">${neutralBadge(r.T_Espera)}</td>
@@ -520,14 +534,31 @@ function exportExcel() {
     showToast('No hay datos para exportar', 'error');
     return;
   }
-  const rows = state.agente.filtered.map(r => ({
-    Fecha: r.Fecha || '', Asesor: r.Asesor || '', Supervisor: r.Supervisor || '', Campaña: r.Campana || '',
-    T_Logueado: r.T_logueado, Llamadas: r.Llamadas, Llamadas_Inb: r.Llamadas_Inb, Llamadas_Out: r.Llamadas_Out,
-    Ventas_Inb: r.Ventas_Inb, Ventas_Out: r.Ventas_Out, T_AHT: r.T_AHT, T_ACW: r.T_ACW, T_Espera: r.T_Espera,
-    T_Pausa_Produ: r.T_Pausa_Produ, Cant_Desconex: r.Cant_Desconex, T_Desconex: r.T_Desconex,
-    Pct_Pausa: r.Pct_Pausa, Pct_Ocupacion: r.Pct_Ocupacion, Pct_Disponibilidad: r.Pct_Disponibilidad,
-    Pct_Utilizacion: r.Pct_Utilizacion, Pct_Shrinkage: r.Pct_Shrinkage, Pct_Eficiencia: r.Pct_Eficiencia,
-  }));
+  const isTyT = document.getElementById('f-campana')?.value === "Claro - Terminales & Tecnologia Bogota";
+  
+  const rows = state.agente.filtered.map(r => {
+    let row = {
+      Fecha: r.Fecha || '', Asesor: r.Asesor || '', Supervisor: r.Supervisor || '', Campaña: r.Campana || '',
+      T_Logueado: r.T_logueado, Llamadas: r.Llamadas, Llamadas_Inb: r.Llamadas_Inb, Llamadas_Out: r.Llamadas_Out,
+      Ventas_Inb: r.Ventas_Inb, Ventas_Out: r.Ventas_Out
+    };
+    if (isTyT) {
+      row['Terminales'] = r.TyT_Terminales || 0;
+      row['Tecnologia'] = r.TyT_Tecnologia || 0;
+      row['Unidades'] = r.TyT_Unidades || 0;
+      row['Efect_Grl'] = r.TyT_Efect_Grl ? (r.TyT_Efect_Grl * 100).toFixed(2) + '%' : '0.00%';
+      row['$ Terminales'] = r.TyT_Dolar_Terminales || 0;
+      row['$ Tecnologia'] = r.TyT_Dolar_Tecnologia || 0;
+      row['$ Total'] = r.TyT_Dolar_Total || 0;
+    }
+    Object.assign(row, {
+      T_AHT: r.T_AHT, T_ACW: r.T_ACW, T_Espera: r.T_Espera,
+      T_Pausa_Produ: r.T_Pausa_Produ, Cant_Desconex: r.Cant_Desconex, T_Desconex: r.T_Desconex,
+      Pct_Pausa: r.Pct_Pausa, Pct_Ocupacion: r.Pct_Ocupacion, Pct_Disponibilidad: r.Pct_Disponibilidad,
+      Pct_Utilizacion: r.Pct_Utilizacion, Pct_Shrinkage: r.Pct_Shrinkage, Pct_Eficiencia: r.Pct_Eficiencia,
+    });
+    return row;
+  });
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'DetalleAgente');
@@ -540,15 +571,39 @@ function exportCSV() {
     showToast('No hay datos para exportar', 'error');
     return;
   }
-  const headers = ['Fecha','Asesor','Supervisor','Campaña','T_Logueado','Llamadas','Llamadas_Inb','Llamadas_Out','Ventas_Inb','Ventas_Out','T_AHT','T_ACW','T_Espera','T_Pausa_Produ','Cant_Desconex','T_Desconex','Pct_Pausa','Pct_Ocupacion','Pct_Disponibilidad','Pct_Utilizacion','Pct_Shrinkage','Pct_Eficiencia'];
-  const rows = state.agente.filtered.map(r => [
-    csvCell(r.Fecha), csvCell(r.Asesor), csvCell(r.Supervisor), csvCell(r.Campana),
-    csvCell(r.T_logueado), csvCell(r.Llamadas), csvCell(r.Llamadas_Inb), csvCell(r.Llamadas_Out),
-    csvCell(r.Ventas_Inb), csvCell(r.Ventas_Out), csvCell(r.T_AHT), csvCell(r.T_ACW), csvCell(r.T_Espera),
-    csvCell(r.T_Pausa_Produ), csvCell(r.Cant_Desconex), csvCell(r.T_Desconex),
-    csvCell(r.Pct_Pausa), csvCell(r.Pct_Ocupacion), csvCell(r.Pct_Disponibilidad),
-    csvCell(r.Pct_Utilizacion), csvCell(r.Pct_Shrinkage), csvCell(r.Pct_Eficiencia),
-  ].join(','));
+  const isTyT = document.getElementById('f-campana')?.value === "Claro - Terminales & Tecnologia Bogota";
+  
+  let headers = ['Fecha','Asesor','Supervisor','Campaña','T_Logueado','Llamadas','Llamadas_Inb','Llamadas_Out','Ventas_Inb','Ventas_Out'];
+  if (isTyT) {
+    headers.push('Terminales', 'Tecnologia', 'Unidades', 'Efect_Grl', '$ Terminales', '$ Tecnologia', '$ Total');
+  }
+  headers.push('T_AHT','T_ACW','T_Espera','T_Pausa_Produ','Cant_Desconex','T_Desconex','Pct_Pausa','Pct_Ocupacion','Pct_Disponibilidad','Pct_Utilizacion','Pct_Shrinkage','Pct_Eficiencia');
+  
+  const rows = state.agente.filtered.map(r => {
+    let rowValues = [
+      csvCell(r.Fecha), csvCell(r.Asesor), csvCell(r.Supervisor), csvCell(r.Campana),
+      csvCell(r.T_logueado), csvCell(r.Llamadas), csvCell(r.Llamadas_Inb), csvCell(r.Llamadas_Out),
+      csvCell(r.Ventas_Inb), csvCell(r.Ventas_Out)
+    ];
+    if (isTyT) {
+      rowValues.push(
+        csvCell(r.TyT_Terminales || 0),
+        csvCell(r.TyT_Tecnologia || 0),
+        csvCell(r.TyT_Unidades || 0),
+        csvCell(r.TyT_Efect_Grl ? (r.TyT_Efect_Grl * 100).toFixed(2) + '%' : '0.00%'),
+        csvCell(r.TyT_Dolar_Terminales || 0),
+        csvCell(r.TyT_Dolar_Tecnologia || 0),
+        csvCell(r.TyT_Dolar_Total || 0)
+      );
+    }
+    rowValues.push(
+      csvCell(r.T_AHT), csvCell(r.T_ACW), csvCell(r.T_Espera),
+      csvCell(r.T_Pausa_Produ), csvCell(r.Cant_Desconex), csvCell(r.T_Desconex),
+      csvCell(r.Pct_Pausa), csvCell(r.Pct_Ocupacion), csvCell(r.Pct_Disponibilidad),
+      csvCell(r.Pct_Utilizacion), csvCell(r.Pct_Shrinkage), csvCell(r.Pct_Eficiencia)
+    );
+    return rowValues.join(',');
+  });
   const content = [headers.join(','), ...rows].join('\n');
   const blob = new Blob(['﻿' + content], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

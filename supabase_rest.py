@@ -78,3 +78,75 @@ def replace_by_date(table: str, fecha: str, rows: list[dict]) -> None:
     el histórico de otras fechas (usado por el sync incremental diario)."""
     delete_by_date(table, fecha)
     bulk_insert(table, rows)
+
+
+def fetch_attendance(fecha_inicio: str, fecha_fin: str) -> list[dict]:
+    """Obtiene los datos de asistencia usando la API REST para evitar
+    el bloqueo de puertos de la conexión directa a Postgres."""
+    url = f"{Config.SUPABASE_URL}/rest/v1/attendance_snapshot"
+    headers = _headers()
+    # Para GET, no queremos return=minimal
+    if "Prefer" in headers:
+        del headers["Prefer"]
+        
+    params = [
+        ("select", "Fecha:fecha,Cedula:cedula,Nombre:nombre,Supervisor:supervisor,Campana:campana,Asiste:asiste,Ausente:ausente,Retardo:retardo,Hora_Programada:hora_programada,Hora_Inicio:hora_inicio,Tiempo_Retardo:tiempo_retardo"),
+        ("fecha", f"gte.{fecha_inicio}"),
+        ("fecha", f"lte.{fecha_fin}")
+    ]
+    
+    resp = requests.get(url, headers=headers, params=params, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def fetch_agent_metrics(fecha_inicio: str, fecha_fin: str) -> list[dict]:
+    """Obtiene los datos de métricas de agente usando la API REST."""
+    url = f"{Config.SUPABASE_URL}/rest/v1/agent_metrics_snapshot"
+    headers = _headers()
+    if "Prefer" in headers:
+        del headers["Prefer"]
+        
+    cols = [
+        "Fecha:fecha",
+        "Nombres_Apellidos:nombre",
+        "Supervisor:supervisor",
+        "Campana:campana",
+        "llamadas:llamadas",
+        "Cant_Mrc_Inb:cant_mrc_inb",
+        "Cant_Mrc_Out:cant_mrc_out",
+        "Ventas_Inb:ventas_inb",
+        "Ventas_Out:ventas_out",
+        "T_login:t_login",
+        "T_dispo:t_dispo",
+        "T_dead:t_dead",
+        "T_preturno:t_preturno",
+        "T_capacitacion:t_capacitacion",
+        "T_whatsapp:t_whatsapp",
+        "T_Exceso_Alm:t_exceso_alm",
+        "T_Exceso_Break:t_exceso_break",
+        "T_Exceso_Bano:t_exceso_bano",
+        "T_logueado:t_logueado",
+        "Aht:aht",
+        "T_acw:t_acw",
+        "T_espera:t_espera",
+        "T_pausa_productiva:t_pausa_productiva",
+        "cantidad_desconexiones:cantidad_desconexiones",
+        "tiempo_desconexion_minutos:tiempo_desconexion_minutos",
+        "Porc_pausa:porc_pausa",
+        "Ocupacion:ocupacion",
+        "Disponibilidad:disponibilidad",
+        "Utilizacion:utilizacion",
+        "Shrinkage:shrinkage",
+        "Eficiencia:eficiencia"
+    ]
+    
+    params = [
+        ("select", ",".join(cols)),
+        ("fecha", f"gte.{fecha_inicio}"),
+        ("fecha", f"lte.{fecha_fin}")
+    ]
+    
+    resp = requests.get(url, headers=headers, params=params, timeout=30)
+    resp.raise_for_status()
+    return resp.json()

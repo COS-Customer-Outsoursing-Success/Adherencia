@@ -5,6 +5,7 @@ from typing import Any
 
 from database import execute_query
 import supabase_db
+import supabase_rest
 from utils.daterange import resolve_date_range
 from utils.formatters import td_to_str, safe_pct, hhmmss_to_minutes, date_to_str
 
@@ -131,7 +132,12 @@ def get_raw_data(filters: dict | None = None) -> list[dict]:
     """Datos de asistencia leídos desde Supabase (usado por la app Flask)."""
     filters = filters or {}
     fecha_inicio, fecha_fin = resolve_date_range(filters)
-    rows = supabase_db.execute_query(_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+    try:
+        rows = supabase_db.execute_query(_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+    except Exception as e:
+        logger.warning(f"Error con conexión Postgres directa: {e}. Reintentando con API REST...")
+        rows = supabase_rest.fetch_attendance(fecha_inicio, fecha_fin)
+
     for r in rows:
         r["Fecha"] = date_to_str(r.get("Fecha"))
     return _apply_filters(rows, filters)

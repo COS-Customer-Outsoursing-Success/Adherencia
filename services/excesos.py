@@ -6,6 +6,7 @@ import random
 from datetime import datetime
 
 import supabase_db
+import supabase_rest
 from services._queries import AGENT_METRICS_SNAPSHOT_SQL
 from utils.daterange import resolve_date_range
 from utils.formatters import date_to_str, safe_pct, seconds_to_hhmmss
@@ -137,7 +138,12 @@ def get_raw_data(filters: dict | None = None) -> list[dict]:
         rows = _mock_raw_rows()
     else:
         fecha_inicio, fecha_fin = resolve_date_range(filters)
-        rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+        try:
+            rows = supabase_db.execute_query(AGENT_METRICS_SNAPSHOT_SQL, (fecha_inicio, fecha_fin))
+        except Exception as e:
+            logger.warning(f"Error con conexión Postgres directa en excesos: {e}. Reintentando con API REST...")
+            rows = supabase_rest.fetch_agent_metrics(fecha_inicio, fecha_fin)
+
     built = [_build_row(r) for r in rows]
     return _apply_filters(built, filters)
 
