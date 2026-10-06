@@ -5,6 +5,7 @@
 
 /* ── Variables ─────────────────────────────────────────────────────────── */
 :root {
+  --gauge-track:      #F3D6D3;
   --claro-red:        #DA291C;
   --claro-dark-red:   #A61E13;
   --claro-light-red:  #F44336;
@@ -47,6 +48,16 @@
   --filter-h:  58px;
   --font:      'Inter', system-ui, -apple-system, sans-serif;
   --transition: 0.2s ease;
+}
+
+/* Tema azul: Cartera Propia y Banco Serfinanza - Unificado (se activa por JS segun el filtro de Campaña) */
+body.theme-blue {
+  --claro-red:        #1565C0;
+  --claro-dark-red:   #0D47A1;
+  --claro-light-red:  #42A5F5;
+  --claro-red-10:     rgba(21, 101, 192, 0.10);
+  --claro-red-20:     rgba(21, 101, 192, 0.20);
+  --gauge-track:      #D6E4F5;
 }
 
 /* ── Reset / Base ───────────────────────────────────────────────────────── */

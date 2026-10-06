@@ -275,7 +275,15 @@ function clearFilters() {
 // UPDATE ALL
 // ════════════════════════════════════════════════════════════════════════
 
+const BLUE_THEME_CAMPAIGNS = /serfinanza|cartera propia/i;
+
+function applyCampaignTheme() {
+  const campana = document.getElementById('f-campana')?.value || '';
+  document.body.classList.toggle('theme-blue', BLUE_THEME_CAMPAIGNS.test(campana));
+}
+
 function updateAll(data) {
+  applyCampaignTheme();
   updateKPIs(data.kpis);
   renderExcesoDonut(data.supervisors || []);
   renderExcesoBars(data.supervisors || []);

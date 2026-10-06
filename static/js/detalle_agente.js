@@ -282,7 +282,15 @@ function clearFilters() {
 // UPDATE ALL
 // ════════════════════════════════════════════════════════════════════════
 
+const BLUE_THEME_CAMPAIGNS = /serfinanza|cartera propia/i;
+
+function applyCampaignTheme() {
+  const campana = document.getElementById('f-campana')?.value || '';
+  document.body.classList.toggle('theme-blue', BLUE_THEME_CAMPAIGNS.test(campana));
+}
+
 function updateAll(data) {
+  applyCampaignTheme();
   updateKPIs(data.kpis);
   updateGauges(data.kpis);
   renderRankings(data.agentes || []);
@@ -398,13 +406,16 @@ function drawSegmentedGauge(canvas, pct) {
   function draw(filledRatio) {
     ctx.clearRect(0, 0, size, size);
     const filledTicks = Math.round(filledRatio * numTicks);
+    const css = getComputedStyle(document.body);
+    const colorOn = css.getPropertyValue('--claro-red').trim() || '#DA291C';
+    const colorOff = css.getPropertyValue('--gauge-track').trim() || '#F3D6D3';
     let angle = -Math.PI / 2;
     for (let i = 0; i < numTicks; i++) {
       ctx.beginPath();
       ctx.arc(cx, cy, radius, angle, angle + tickAngle);
       ctx.lineWidth = size * 0.09;
       ctx.lineCap = 'round';
-      ctx.strokeStyle = i < filledTicks ? '#DA291C' : '#F3D6D3';
+      ctx.strokeStyle = i < filledTicks ? colorOn : colorOff;
       ctx.stroke();
       angle += anglePerTick;
     }
