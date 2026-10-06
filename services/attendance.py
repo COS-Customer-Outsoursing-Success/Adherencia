@@ -4,6 +4,7 @@ import logging
 from typing import Any
 
 from database import execute_query
+from services._queries import ACTIVE_ADVISORS_SQL
 import supabase_db
 import supabase_rest
 from utils.daterange import resolve_date_range
@@ -11,29 +12,15 @@ from utils.formatters import td_to_str, safe_pct, hhmmss_to_minutes, date_to_str
 
 logger = logging.getLogger(__name__)
 
-# Servicios monitoreados (bbdd_cs_bog_tmk.tb_headcount_dts.Campana no es confiable como
-# filtro: la misma campaña queda grabada con dos formatos distintos según cuándo se cargó
-# el registro, ej. "Claro - Movil Tmk Bogota" vs "Claro Movil TMK Bogota", y además el
-# campo Campana viene truncado a 25 caracteres. Servicio sí es estable, así que se filtra
-# por ahí y se normaliza el nombre de campaña que ve el resto de la app con un CASE.)
-SERVICIOS = (
-    "Migracion Ventas",
-    "Portabilidad Ventas",
-    "Hogar Ventas",
-    "T&T",
-)
+# Asesores monitoreados: ver ACTIVE_ADVISORS_SQL en services/_queries.py (Bogotá por
+# Servicio + Serfinanza Cartera, Cartera Propia y Barranquilla desde bbdd_config.tb_headcount).
 
 _BASE_SQL = """
 SELECT
     HC.documento                  AS Cedula,
     HC.Nombres_Apellidos          AS Nombre,
     HC.Nombre_Supervisor          AS Supervisor,
-    CASE HC.Servicio
-        WHEN 'Migracion Ventas'    THEN 'Claro - Movil Tmk Bogota'
-        WHEN 'Portabilidad Ventas' THEN 'Claro - Movil Tmk Bogota'
-        WHEN 'Hogar Ventas'        THEN 'Claro - Hogar Tmk Bogota'
-        WHEN 'T&T'                 THEN 'Claro - Terminales & Tecnologia Bogota'
-    END                            AS Campana,
+    HC.Campana                    AS Campana,
     IF(SOUL.hora_log_ini_turn > 0, 1, 0) AS Asiste,
     CASE
         WHEN SOUL.hora_log_ini_turn = 0
@@ -52,13 +39,12 @@ SELECT
         MAKETIME(0,0,0)
     )                             AS Tiempo_Retardo,
     SOUL.fecha_prog_ini_turn      AS Fecha
-FROM bbdd_cs_bog_tmk.tb_headcount_dts HC
+FROM (
+{advisors}
+) HC
 INNER JOIN bbdd_config.tb_soul_proglog SOUL
        ON HC.documento = SOUL.documento
-WHERE HC.Servicio IN ({placeholders})
-  AND HC.Estado = 'Activo'
-  AND HC.Cargo  = 'Asesor'
-  AND SOUL.fecha_prog_ini_turn = %s
+WHERE SOUL.fecha_prog_ini_turn = %s
   AND SOUL.hora_prog_ini_turn  > 0
 """
 
@@ -82,8 +68,7 @@ WHERE fecha BETWEEN %s AND %s
 
 
 def _build_query(fecha: str) -> tuple[str, tuple]:
-    placeholders = ", ".join(["%s"] * len(SERVICIOS))
-    return _BASE_SQL.format(placeholders=placeholders), SERVICIOS + (fecha,)
+    return _BASE_SQL.format(advisors=ACTIVE_ADVISORS_SQL), (fecha,)
 
 
 def _serialize_row(row: dict) -> dict:

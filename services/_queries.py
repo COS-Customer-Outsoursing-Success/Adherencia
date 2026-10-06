@@ -1,5 +1,42 @@
 """Consultas SQL compartidas entre módulos de servicio (evita duplicar la query gigante)."""
 
+# ── Base de asesores activos (origen MySQL; usada por asistencia y por métricas) ──
+# Une dos fuentes de headcount:
+#   1) bbdd_cs_bog_tmk.tb_headcount_dts  -> campañas Bogotá, filtradas por Servicio.
+#   2) bbdd_config.tb_headcount          -> Banco Serfinanza - Cartera, Cartera Propia y las
+#      campañas Claro del Site Barranquilla (Campana + Site deben coincidir).
+# Ambas exponen las mismas columnas y ya traen Campana normalizada.
+ACTIVE_ADVISORS_SQL = """
+SELECT Documento, Nombres_Apellidos, Nombre_Supervisor,
+    CASE Servicio
+        WHEN 'Migracion Ventas'    THEN 'Claro - Movil Tmk Bogota'
+        WHEN 'Portabilidad Ventas' THEN 'Claro - Movil Tmk Bogota'
+        WHEN 'Hogar Ventas'        THEN 'Claro - Hogar Tmk Bogota'
+        WHEN 'T&T'                 THEN 'Claro - Terminales & Tecnologia Bogota'
+    END AS Campana,
+    Servicio
+FROM bbdd_cs_bog_tmk.tb_headcount_dts
+WHERE Servicio IN ('Migracion Ventas', 'Portabilidad Ventas', 'Hogar Ventas', 'T&T')
+  AND Estado = 'Activo'
+  AND Cargo  = 'Asesor'
+UNION
+SELECT Documento, Nombres_Apellidos, Nombre_Supervisor,
+    CASE
+        WHEN Campana = 'Claro - Migracion'              THEN 'Claro - Migracion Barranquilla'
+        WHEN Campana = 'Claro - Terminales & Tecnologia' THEN 'Claro - Terminales & Tecnologia Barranquilla'
+        ELSE Campana
+    END AS Campana,
+    Servicio
+FROM bbdd_config.tb_headcount
+WHERE TRIM(Cargo)  = 'Asesor'
+  AND TRIM(Estado) = 'Activo'
+  AND (
+        TRIM(Campana) IN ('Banco Serfinanza - Cartera', 'Cartera Propia')
+     OR (TRIM(Site) = 'Site Barranquilla'
+         AND TRIM(Campana) IN ('Claro - Migracion', 'Claro - Terminales & Tecnologia'))
+  )
+"""
+
 # ── Lectura desde Supabase (usada por excesos.py y detalle_agente.py en la app desplegada) ──
 AGENT_METRICS_SNAPSHOT_SQL = """
 SELECT
@@ -349,20 +386,7 @@ FROM
              AND usuario <> 'TOTALS'
             ) AS SB
     ) DEA
-LEFT JOIN (SELECT
-        Documento, Nombres_Apellidos, Nombre_Supervisor,
-        CASE Servicio
-            WHEN 'Migracion Ventas'    THEN 'Claro - Movil Tmk Bogota'
-            WHEN 'Portabilidad Ventas' THEN 'Claro - Movil Tmk Bogota'
-            WHEN 'Hogar Ventas'        THEN 'Claro - Hogar Tmk Bogota'
-            WHEN 'T&T'                 THEN 'Claro - Terminales & Tecnologia Bogota'
-        END AS Campana,
-        Servicio
-    FROM
-        bbdd_cs_bog_tmk.tb_headcount_dts
-    WHERE
-        Servicio IN ('Migracion Ventas', 'Portabilidad Ventas', 'Hogar Ventas', 'T&T')
-            AND estado = 'Activo') HC
+LEFT JOIN (__ADVISORS__) HC
             ON DEA.cedula = HC.Documento
     LEFT JOIN (
     SELECT
@@ -381,3 +405,5 @@ LEFT JOIN mrc_inbound AS mrc_inb ON DEA.cedula = mrc_inb.Documento
 LEFT JOIN mrc_outbound AS mrc_out ON DEA.cedula = mrc_out.Documento
 LEFT JOIN desconexiones AS dex ON DEA.cedula = dex.user
 """
+
+AGENT_METRICS_SQL = AGENT_METRICS_SQL.replace("__ADVISORS__", ACTIVE_ADVISORS_SQL)
