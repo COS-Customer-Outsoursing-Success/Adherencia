@@ -168,24 +168,19 @@
     <div class="chart-card polar-card">
       <div class="chart-card__header">
         <h3 class="chart-card__title">Minutos de Exceso por Supervisor</h3>
-        <p class="chart-card__subtitle">Distribución radial · Almuerzo · Break · Baño</p>
+        <p class="chart-card__subtitle">Composición del exceso total · Almuerzo · Break · Baño</p>
       </div>
       <div class="polar-card__body">
         <div class="polar-card__chart">
-          <canvas id="chart-polar-exceso" width="480" height="480"></canvas>
+          <svg id="exceso-donut" viewBox="0 0 200 200" role="img" aria-label="Composición del exceso total"></svg>
           <div class="polar-center-label">
             <span class="polar-center-label__value" id="polar-total-value">0</span>
             <span class="polar-center-label__unit">min</span>
             <span class="polar-center-label__caption">Exceso Total</span>
           </div>
-          <div class="polar-tooltip" id="polar-tooltip"></div>
         </div>
         <div class="polar-card__side">
-          <div class="polar-legend">
-            <div class="polar-legend__item"><span class="polar-dot polar-dot--alm"></span> Almuerzo</div>
-            <div class="polar-legend__item"><span class="polar-dot polar-dot--break"></span> Break</div>
-            <div class="polar-legend__item"><span class="polar-dot polar-dot--bano"></span> Baño</div>
-          </div>
+          <div class="polar-legend" id="exceso-donut-legend"></div>
           <div class="polar-ranking" id="polar-ranking"></div>
         </div>
       </div>
@@ -306,7 +301,7 @@
 <!-- ═══════════════  SCRIPTS  ═══════════════ -->
 <!-- Nota: la gráfica polar apilada se dibuja a mano con Canvas (excesos.js), no usa Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="/static/js/excesos.js?v=20260901b"></script>
+<script src="/static/js/excesos.js?v=20261006a"></script>
 
 </body>
 </html>

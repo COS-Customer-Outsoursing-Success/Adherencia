@@ -277,8 +277,8 @@ function clearFilters() {
 
 function updateAll(data) {
   updateKPIs(data.kpis);
-  renderPolarChart(data.supervisors || []);
-  renderPolarRanking(data.supervisors || []);
+  renderExcesoDonut(data.supervisors || []);
+  renderExcesoBars(data.supervisors || []);
   renderSupervisorTable(data.supervisors || []);
 
   state.agente.data = data.agentes || [];
@@ -314,199 +314,53 @@ function setKPI(id, value) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// POLAR CHART — gráfica de áreas polares apiladas (custom canvas)
+// EXCESO POR SUPERVISOR — dona (composición total) + barras apiladas (por supervisor)
 // ════════════════════════════════════════════════════════════════════════
 
-const POLAR_COLORS = {
-  alm:   { base: '#1565C0', light: '#7FB2E8' },
-  break: { base: '#F57C00', light: '#FFC078' },
-  bano:  { base: '#DA291C', light: '#F0928A' },
-};
-
-const polarChart = {
-  canvas: null,
-  ctx: null,
-  slices: [],      // geometría calculada para hit-testing en hover
-  raf: null,
-};
-
-function renderPolarChart(supervisors) {
-  const canvas = document.getElementById('chart-polar-exceso');
-  if (!canvas) return;
-
-  // Alta densidad de píxeles para nitidez en pantallas retina
-  const dpr = window.devicePixelRatio || 1;
-  if (!canvas._scaled) {
-    canvas._logicalSize = parseFloat(canvas.getAttribute('width'));
-    canvas.width = canvas._logicalSize * dpr;
-    canvas.height = canvas._logicalSize * dpr;
-    canvas._scaled = true;
-    canvas.addEventListener('mousemove', onPolarHover);
-    canvas.addEventListener('mouseleave', hidePolarTooltip);
-  }
-
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  polarChart.canvas = canvas;
-  polarChart.ctx = ctx;
-  const size = canvas._logicalSize;
-
-  const sorted = [...supervisors]
-    .filter(s => s.exceso_total_min > 0)
-    .sort((a, b) => b.exceso_total_min - a.exceso_total_min);
-
-  const totalGeneral = supervisors.reduce((sum, s) => sum + s.exceso_total_min, 0);
-  setKPI('polar-total-value', Math.round(totalGeneral));
-
-  if (!sorted.length) {
-    ctx.clearRect(0, 0, size, size);
-    polarChart.slices = [];
-    return;
-  }
-
-  const maxTotal = Math.max(...sorted.map(s => s.exceso_total_min), 1);
-
-  cancelAnimationFrame(polarChart.raf);
-  const duration = 700;
-  const start = performance.now();
-
-  function frame(now) {
-    const t = Math.min(1, (now - start) / duration);
-    const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-    drawPolar(sorted, maxTotal, size, eased);
-    if (t < 1) {
-      polarChart.raf = requestAnimationFrame(frame);
-    }
-  }
-  polarChart.raf = requestAnimationFrame(frame);
-}
-
-function drawPolar(sorted, maxTotal, size, progress) {
-  const ctx = polarChart.ctx;
-  const cx = size / 2;
-  const cy = size / 2;
-  const innerR = size * 0.16;
-  const outerR = size * 0.46;
-  const gap = 0.035; // radianes de separación entre cuñas
-
-  ctx.clearRect(0, 0, size, size);
-  polarChart.slices = [];
-
-  const n = sorted.length;
-  const anglePer = (2 * Math.PI) / n;
-  let angle = -Math.PI / 2;
-
-  sorted.forEach(s => {
-    const a0 = angle + gap / 2;
-    const a1 = angle + anglePer - gap / 2;
-    const range = (outerR - innerR) * progress;
-
-    const rAlm   = innerR + (s.exceso_alm_min   / maxTotal) * range;
-    const rBreak = rAlm   + (s.exceso_break_min / maxTotal) * range;
-    const rBano  = rBreak + (s.exceso_bano_min  / maxTotal) * range;
-
-    drawRing(ctx, cx, cy, innerR, rAlm,   a0, a1, POLAR_COLORS.alm);
-    drawRing(ctx, cx, cy, rAlm,   rBreak, a0, a1, POLAR_COLORS.break);
-    drawRing(ctx, cx, cy, rBreak, rBano,  a0, a1, POLAR_COLORS.bano);
-
-    polarChart.slices.push({
-      a0, a1, rInner: innerR, rOuter: Math.max(rBano, innerR + 1),
-      supervisor: s.supervisor,
-      layers: [
-        { name: 'Almuerzo', min: s.exceso_alm_min,   rFrom: innerR, rTo: rAlm },
-        { name: 'Break',    min: s.exceso_break_min, rFrom: rAlm,   rTo: rBreak },
-        { name: 'Baño',     min: s.exceso_bano_min,  rFrom: rBreak, rTo: rBano },
-      ],
-      total: s.exceso_total_min,
-    });
-
-    angle += anglePer;
-  });
-
-  // Máscara circular blanca en el centro (hueco del donut)
-  ctx.beginPath();
-  ctx.arc(cx, cy, innerR - 1, 0, Math.PI * 2);
-  ctx.fillStyle = '#ffffff';
-  ctx.fill();
-}
-
-function drawRing(ctx, cx, cy, rFrom, rTo, a0, a1, color) {
-  if (rTo <= rFrom) return;
-  const gradient = ctx.createRadialGradient(cx, cy, rFrom, cx, cy, rTo);
-  gradient.addColorStop(0, color.light);
-  gradient.addColorStop(1, color.base);
-
-  ctx.beginPath();
-  ctx.arc(cx, cy, rTo, a0, a1);
-  ctx.arc(cx, cy, rFrom, a1, a0, true);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = '#ffffff';
-  ctx.stroke();
-}
-
-function onPolarHover(e) {
-  const canvas = polarChart.canvas;
-  const rect = canvas.getBoundingClientRect();
-  const size = canvas._logicalSize;
-  const scale = size / rect.width;
-  const x = (e.clientX - rect.left) * scale;
-  const y = (e.clientY - rect.top) * scale;
-  const cx = size / 2, cy = size / 2;
-  const dx = x - cx, dy = y - cy;
-  const r = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx);
-
-  const hit = polarChart.slices.find(s => {
-    if (r < s.rInner || r > s.rOuter) return false;
-    return angleInRange(angle, s.a0, s.a1);
-  });
-
-  if (!hit) { hidePolarTooltip(); return; }
-
-  const layer = hit.layers.find(l => r >= l.rFrom && r <= l.rTo) || hit.layers[hit.layers.length - 1];
-  showPolarTooltip(e, hit, layer);
-}
-
-function angleInRange(a, a0, a1) {
-  // a0/a1 están en el sistema "-90° + sentido horario"; convertimos a atan2 estándar
-  const norm = ang => {
-    let v = ang - (-Math.PI / 2);
-    while (v < 0) v += Math.PI * 2;
-    while (v >= Math.PI * 2) v -= Math.PI * 2;
-    return v;
-  };
-  const target = norm(a);
-  const from = norm(a0);
-  const to = norm(a1);
-  return from <= to ? (target >= from && target <= to) : (target >= from || target <= to);
-}
-
-function showPolarTooltip(e, slice, layer) {
-  const tip = document.getElementById('polar-tooltip');
-  const wrapper = document.querySelector('.polar-card__chart');
-  if (!tip || !wrapper) return;
-  const rect = wrapper.getBoundingClientRect();
-  tip.innerHTML = `<strong>${esc(slice.supervisor)}</strong><br>${layer.name}: <strong>${round1(layer.min)} min</strong><br>Total: ${round1(slice.total)} min`;
-  tip.style.left = (e.clientX - rect.left) + 'px';
-  tip.style.top  = (e.clientY - rect.top - 10) + 'px';
-  tip.classList.add('show');
-}
-
-function hidePolarTooltip() {
-  const tip = document.getElementById('polar-tooltip');
-  if (tip) tip.classList.remove('show');
-}
+const EXCESO_TIPOS = [
+  { key: 'exceso_alm_min',   name: 'Almuerzo', cls: 'alm',   color: '#1565C0' },
+  { key: 'exceso_break_min', name: 'Break',    cls: 'break', color: '#F57C00' },
+  { key: 'exceso_bano_min',  name: 'Baño',     cls: 'bano',  color: '#DA291C' },
+];
 
 function round1(n) {
   return Math.round(n * 10) / 10;
 }
 
-// ── Ranking lateral ───────────────────────────────────────────────────────
+function renderExcesoDonut(supervisors) {
+  const svg = document.getElementById('exceso-donut');
+  if (!svg) return;
 
-function renderPolarRanking(supervisors) {
+  const totales = EXCESO_TIPOS.map(t => ({
+    ...t, min: supervisors.reduce((sum, s) => sum + (s[t.key] || 0), 0),
+  }));
+  const total = totales.reduce((sum, t) => sum + t.min, 0);
+  setKPI('polar-total-value', Math.round(total));
+
+  const R = 80, C = 2 * Math.PI * R;
+  let offset = 0;
+  const arcs = total > 0 ? totales.map(t => {
+    const len = (t.min / total) * C;
+    const arc = `<circle cx="100" cy="100" r="${R}" fill="none" stroke="${t.color}" stroke-width="26"
+      stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-offset}" transform="rotate(-90 100 100)">
+      <title>${t.name}: ${round1(t.min)} min (${Math.round(t.min / total * 100)}%)</title></circle>`;
+    offset += len;
+    return arc;
+  }).join('') : '';
+  svg.innerHTML = `<circle cx="100" cy="100" r="${R}" fill="none" stroke="#eee" stroke-width="26"/>${arcs}`;
+
+  const legend = document.getElementById('exceso-donut-legend');
+  if (legend) {
+    legend.innerHTML = totales.map(t => `
+      <div class="polar-legend__item">
+        <span class="polar-dot polar-dot--${t.cls}"></span> ${t.name}
+        <strong>${round1(t.min)} min</strong>
+        <span class="exceso-pct">${total > 0 ? Math.round(t.min / total * 100) : 0}%</span>
+      </div>`).join('');
+  }
+}
+
+function renderExcesoBars(supervisors) {
   const el = document.getElementById('polar-ranking');
   if (!el) return;
   const sorted = [...supervisors].sort((a, b) => b.exceso_total_min - a.exceso_total_min);
@@ -516,12 +370,23 @@ function renderPolarRanking(supervisors) {
     return;
   }
 
-  el.innerHTML = sorted.map((s, i) => `
-    <div class="polar-ranking__row">
+  const max = Math.max(...sorted.map(s => s.exceso_total_min), 1);
+  el.innerHTML = sorted.map((s, i) => {
+    const segs = EXCESO_TIPOS.map(t => {
+      const v = s[t.key] || 0;
+      return v > 0
+        ? `<span class="exceso-bar__seg exceso-bar__seg--${t.cls}" style="width:${v / max * 100}%"
+             title="${t.name}: ${round1(v)} min"></span>`
+        : '';
+    }).join('');
+    return `
+    <div class="exceso-bar">
       <span class="polar-ranking__rank">#${i + 1}</span>
-      <span class="polar-ranking__name">${esc(s.supervisor)}</span>
+      <span class="exceso-bar__name" title="${esc(s.supervisor)}">${esc(s.supervisor)}</span>
+      <div class="exceso-bar__track">${segs}</div>
       <span class="polar-ranking__value">${round1(s.exceso_total_min)} min</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════════════════════════════════════

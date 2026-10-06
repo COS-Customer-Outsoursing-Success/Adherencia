@@ -1037,19 +1037,18 @@ body {
 }
 
 .polar-card__chart {
-  flex: 0 0 58%;
-  max-width: 58%;
+  flex: 0 0 300px;
+  max-width: 300px;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.polar-card__chart canvas {
+.polar-card__chart svg {
   width: 100%;
-  max-width: 440px;
+  max-width: 300px;
   height: auto;
-  cursor: default;
 }
 
 .polar-center-label {
@@ -1147,10 +1146,42 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 360px;
+  max-height: 420px;
   overflow-y: auto;
   padding-right: 4px;
 }
+
+.exceso-pct { color: var(--gray-400); font-size: 0.78rem; }
+
+.exceso-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+}
+.exceso-bar__name {
+  width: 190px;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exceso-bar__track {
+  flex: 1;
+  display: flex;
+  height: 16px;
+  background: var(--gray-100);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.exceso-bar__seg { height: 100%; min-width: 2px; transition: width .4s ease; }
+.exceso-bar__seg--alm   { background: var(--polar-alm, #1565C0); }
+.exceso-bar__seg--break { background: var(--polar-break, #F57C00); }
+.exceso-bar__seg--bano  { background: var(--polar-bano, #DA291C); }
+.exceso-bar .polar-ranking__value { width: 80px; text-align: right; }
 
 .polar-ranking__row {
   display: flex;
