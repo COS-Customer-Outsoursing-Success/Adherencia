@@ -89,6 +89,12 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,0.25);
 }
 
+.logo-img {
+  display: block;
+  height: 30px;
+  width: auto;
+}
+
 .logo-claro {
   font-family: var(--font);
   font-weight: 700;
