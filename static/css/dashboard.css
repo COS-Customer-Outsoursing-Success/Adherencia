@@ -1141,6 +1141,8 @@ body {
 .polar-dot--alm   { background: var(--polar-alm, #1565C0); }
 .polar-dot--break { background: var(--polar-break, #F57C00); }
 .polar-dot--bano  { background: var(--polar-bano, #DA291C); }
+.polar-dot--dead  { background: #6A1B9A; }
+.polar-dot--pv    { background: #2E9E5B; }
 
 .polar-ranking {
   display: flex;
@@ -1181,6 +1183,8 @@ body {
 .exceso-bar__seg--alm   { background: var(--polar-alm, #1565C0); }
 .exceso-bar__seg--break { background: var(--polar-break, #F57C00); }
 .exceso-bar__seg--bano  { background: var(--polar-bano, #DA291C); }
+.exceso-bar__seg--dead  { background: #6A1B9A; }
+.exceso-bar__seg--pv    { background: #2E9E5B; }
 .exceso-bar .polar-ranking__value { width: 80px; text-align: right; }
 
 .polar-ranking__row {

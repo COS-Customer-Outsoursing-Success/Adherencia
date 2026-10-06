@@ -321,6 +321,8 @@ const EXCESO_TIPOS = [
   { key: 'exceso_alm_min',   name: 'Almuerzo', cls: 'alm',   color: '#1565C0' },
   { key: 'exceso_break_min', name: 'Break',    cls: 'break', color: '#F57C00' },
   { key: 'exceso_bano_min',  name: 'Baño',     cls: 'bano',  color: '#DA291C' },
+  { key: 'exceso_dead_min',  name: 'Desconexión',    cls: 'dead',  color: '#6A1B9A' },
+  { key: 'exceso_pantalla_min', name: 'Pantalla Verde', cls: 'pv', color: '#2E9E5B' },
 ];
 
 function round1(n) {

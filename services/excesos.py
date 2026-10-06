@@ -186,7 +186,8 @@ def get_supervisor_summary(data: list[dict] | None = None) -> list[dict]:
             acc[s] = {
                 "supervisor": s, "_agentes": set(), "_con_exceso": set(),
                 "exceso_alm_min": 0.0, "exceso_break_min": 0.0,
-                "exceso_bano_min": 0.0, "exceso_total_min": 0.0,
+                "exceso_bano_min": 0.0, "exceso_dead_min": 0.0,
+                "exceso_pantalla_min": 0.0, "exceso_total_min": 0.0,
             }
         acc[s]["_agentes"].add(r["Asesor"])
         if r["T_Exceso_Total_seg"] > 0:
@@ -194,13 +195,16 @@ def get_supervisor_summary(data: list[dict] | None = None) -> list[dict]:
         acc[s]["exceso_alm_min"] += r["T_Exceso_Alm_seg"] / 60
         acc[s]["exceso_break_min"] += r["T_Exceso_Break_seg"] / 60
         acc[s]["exceso_bano_min"] += r["T_Exceso_Bano_seg"] / 60
+        acc[s]["exceso_dead_min"] += r["T_dead_seg"] / 60
+        acc[s]["exceso_pantalla_min"] += r["T_Pantalla_Verde_seg"] / 60
         acc[s]["exceso_total_min"] += r["T_Exceso_Total_seg"] / 60
 
     result = list(acc.values())
     for s in result:
         s["agentes"] = len(s.pop("_agentes"))
         s["con_exceso"] = len(s.pop("_con_exceso"))
-        for k in ("exceso_alm_min", "exceso_break_min", "exceso_bano_min", "exceso_total_min"):
+        for k in ("exceso_alm_min", "exceso_break_min", "exceso_bano_min",
+                  "exceso_dead_min", "exceso_pantalla_min", "exceso_total_min"):
             s[k] = round(s[k], 1)
     result.sort(key=lambda x: x["exceso_total_min"], reverse=True)
     return result
