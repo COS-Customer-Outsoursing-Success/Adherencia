@@ -59,7 +59,7 @@ Asistencia y métricas (Excesos / Detalle de Agente) parten de `ACTIVE_ADVISORS_
 | Origen | Campañas |
 |---|---|
 | `bbdd_cs_bog_tmk.tb_headcount_dts` (por Servicio) | Claro - Movil Tmk Bogota, Claro - Hogar Tmk Bogota, Claro - Terminales & Tecnologia Bogota |
-| `bbdd_config.tb_headcount` | Banco Serfinanza - Cartera, Cartera Propia, y del Site Barranquilla: Claro - Migracion y Claro - Terminales & Tecnologia (se muestran con sufijo " Barranquilla") |
+| `bbdd_config.tb_headcount` | Banco Serfinanza - Cartera, Banco Serfinanza - Unificado, Cartera Propia, y del Site Barranquilla: Claro - Migracion y Claro - Terminales & Tecnologia (se muestran con sufijo " Barranquilla") |
 
 ---
 

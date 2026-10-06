@@ -31,7 +31,7 @@ FROM bbdd_config.tb_headcount
 WHERE TRIM(Cargo)  = 'Asesor'
   AND TRIM(Estado) = 'Activo'
   AND (
-        TRIM(Campana) IN ('Banco Serfinanza - Cartera', 'Cartera Propia')
+        TRIM(Campana) IN ('Banco Serfinanza - Cartera', 'Banco Serfinanza - Unificado', 'Cartera Propia')
      OR (TRIM(Site) = 'Site Barranquilla'
          AND TRIM(Campana) IN ('Claro - Migracion', 'Claro - Terminales & Tecnologia'))
   )
