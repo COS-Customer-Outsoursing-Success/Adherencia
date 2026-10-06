@@ -24,6 +24,7 @@ from datetime import date
 import supabase_rest
 from database import execute_query
 from services._queries import AGENT_METRICS_SQL, TYT_SALES_SQL
+from services import carteras_propias
 from services.attendance import get_raw_data_from_mysql
 
 logging.basicConfig(
@@ -64,6 +65,14 @@ def sync_agent_metrics(fecha: str) -> int:
     logger.info("Consultando métricas de agentes del %s en el MySQL corporativo...", fecha)
     rows = execute_query(AGENT_METRICS_SQL, {"fecha": fecha})
     logger.info("%d filas obtenidas de MySQL (agent_metrics)", len(rows))
+
+    # Cartera Propia vive en otro servidor MySQL: si falla, el resto del sync sigue.
+    try:
+        extra = carteras_propias.get_metrics(fecha)
+        rows = list(rows) + extra
+        logger.info("%d filas adicionales de Cartera Propia", len(extra))
+    except Exception:
+        logger.exception("No se pudieron leer las métricas de Cartera Propia; se omiten")
 
     payload = [
         {

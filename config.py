@@ -12,6 +12,9 @@ class Config:
     DB_USERNAME = os.getenv("DB_USERNAME", "")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
+    # Segundo servidor MySQL (mismas credenciales): tiempos de agente de Cartera Propia
+    DB2_HOST = os.getenv("DB2_HOST", "172.70.7.61")
+
     # ── Supabase / Postgres (destino, usada por la app Flask) ───────────────
     SUPABASE_DB_HOST = os.getenv("SUPABASE_DB_HOST", "")
     SUPABASE_DB_PORT = int(os.getenv("SUPABASE_DB_PORT", "5432"))
