@@ -81,12 +81,8 @@
       </select>
     </div>
     <div class="filter-group">
-      <label class="filter-label">Hora ingreso</label>
-      <div class="filter-time-range">
-        <input class="filter-input" type="time" id="f-hora-ini" placeholder="Desde" />
-        <span class="filter-time-sep">—</span>
-        <input class="filter-input" type="time" id="f-hora-fin" placeholder="Hasta" />
-      </div>
+      <label class="filter-label" for="f-cedula">Cédula</label>
+      <input class="filter-input" type="text" id="f-cedula" inputmode="numeric" placeholder="Buscar cédula" autocomplete="off" />
     </div>
     <div class="filter-group">
       <label class="filter-label">Rango de fechas</label>
@@ -455,7 +451,7 @@
 <!-- SheetJS para exportar a Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- Dashboard logic -->
-<script src="/static/js/dashboard.js?v=20260901d"></script>
+<script src="/static/js/dashboard.js?v=20261013a"></script>
 
 </body>
 </html>

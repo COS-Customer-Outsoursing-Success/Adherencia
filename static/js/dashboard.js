@@ -155,10 +155,11 @@ function setupSupervisorMultiselect(onChange) {
 
 function setupEventListeners() {
   // Filters → debounced refresh
-  ['f-campana','f-estado','f-hora-ini','f-hora-fin','f-fecha-ini','f-fecha-fin'].forEach(id => {
+  ['f-campana','f-estado','f-fecha-ini','f-fecha-fin'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', debounce(refreshDashboard, 350));
   });
+  document.getElementById('f-cedula')?.addEventListener('input', debounce(refreshDashboard, 500));
   setupSupervisorMultiselect(debounce(refreshDashboard, 350));
 
   document.getElementById('btn-clear-filters').addEventListener('click', clearFilters);
@@ -276,15 +277,14 @@ function buildQueryParams() {
   getSelectedSupervisors().forEach(s => params.append('supervisor', s));
   add('f-campana',    'campana');
   add('f-estado',     'estado');
-  add('f-hora-ini',   'hora_inicio');
-  add('f-hora-fin',   'hora_fin');
+  add('f-cedula',     'cedula');
   add('f-fecha-ini',  'fecha_inicio');
   add('f-fecha-fin',  'fecha_fin');
   return params.toString();
 }
 
 function clearFilters() {
-  ['f-campana','f-estado','f-hora-ini','f-hora-fin'].forEach(id => {
+  ['f-campana','f-estado','f-cedula'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });

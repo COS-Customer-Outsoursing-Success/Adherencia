@@ -23,8 +23,7 @@ def _filters_from_request() -> dict:
         "supervisor":   request.args.getlist("supervisor"),
         "campana":      request.args.get("campana", ""),
         "estado":       request.args.get("estado", ""),
-        "hora_inicio":  request.args.get("hora_inicio", ""),
-        "hora_fin":     request.args.get("hora_fin", ""),
+        "cedula":       request.args.get("cedula", "").strip(),
         "fecha_inicio": request.args.get("fecha_inicio", ""),
         "fecha_fin":    request.args.get("fecha_fin", ""),
     }

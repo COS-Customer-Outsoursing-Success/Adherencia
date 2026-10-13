@@ -100,13 +100,9 @@ def _apply_filters(rows: list[dict], filters: dict) -> list[dict]:
     elif estado == "Retardo":
         result = [r for r in result if r["Retardo"] == 1]
 
-    hora_ini = filters.get("hora_inicio")
-    hora_fin = filters.get("hora_fin")
-    if hora_ini and hora_fin:
-        result = [
-            r for r in result
-            if r["Hora_Inicio"] and hora_ini <= r["Hora_Inicio"] <= hora_fin
-        ]
+    cedula = (filters.get("cedula") or "").strip()
+    if cedula:
+        result = [r for r in result if cedula in str(r.get("Cedula") or "")]
 
     return result
 
