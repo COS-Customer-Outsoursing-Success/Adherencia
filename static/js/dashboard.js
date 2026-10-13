@@ -593,15 +593,39 @@ function updateAusentismo(ausentismo) {
   updateAusentismoBarChart(ausentismo.by_supervisor || []);
 }
 
+// Con más de un día seleccionado, los listados de Ausentes y Retardos muestran la columna Fecha.
+function isMultiDayRange() {
+  const ini = document.getElementById('f-fecha-ini')?.value;
+  const fin = document.getElementById('f-fecha-fin')?.value;
+  return !!(ini && fin && ini !== fin);
+}
+
+function fmtFecha(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '—';
+}
+
+function fechaCell(r, show) {
+  return show ? `<td class="text-center">${neutralBadge(fmtFecha(r.Fecha))}</td>` : '';
+}
+
+function toggleFechaColumn(tbodyId, show) {
+  document.getElementById(tbodyId)?.closest('table')
+    ?.querySelectorAll('th.col-fecha').forEach(th => { th.hidden = !show; });
+}
+
 function renderAusentismoTable(list) {
   const tbody = document.getElementById('ausentismo-tbody');
   if (!tbody) return;
+  const showFecha = isMultiDayRange();
+  toggleFechaColumn('ausentismo-tbody', showFecha);
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-row">Sin ausencias registradas</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${showFecha ? 4 : 3}" class="empty-row">Sin ausencias registradas</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(r => `
     <tr>
+      ${fechaCell(r, showFecha)}
       <td><strong>${esc(r.Nombre || '—')}</strong></td>
       <td>${esc(r.Supervisor || '—')}</td>
       <td class="text-center">${neutralBadge(r.Hora_Programada || '—')}</td>
@@ -671,12 +695,15 @@ function updateRetardos(retardos) {
 function renderRetardosTable(list) {
   const tbody = document.getElementById('retardos-tbody');
   if (!tbody) return;
+  const showFecha = isMultiDayRange();
+  toggleFechaColumn('retardos-tbody', showFecha);
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">Sin retardos registrados</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${showFecha ? 6 : 5}" class="empty-row">Sin retardos registrados</td></tr>`;
     return;
   }
   tbody.innerHTML = list.map(r => `
     <tr>
+      ${fechaCell(r, showFecha)}
       <td><strong>${esc(r.Nombre || '—')}</strong></td>
       <td>${esc(r.Supervisor || '—')}</td>
       <td class="text-center">${neutralBadge(r.Hora_Programada || '—')}</td>

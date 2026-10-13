@@ -268,6 +268,7 @@ def get_ausentismo(data: list[dict] | None = None) -> dict:
         "total": len(absentees),
         "list": [
             {
+                "Fecha": r.get("Fecha"),
                 "Nombre": r["Nombre"],
                 "Supervisor": r["Supervisor"],
                 "Hora_Programada": r["Hora_Programada"],
@@ -308,6 +309,7 @@ def get_retardos_detalle(data: list[dict] | None = None) -> dict:
         "total": len(latecomers),
         "list": [
             {
+                "Fecha": r.get("Fecha"),
                 "Nombre": r["Nombre"],
                 "Supervisor": r["Supervisor"],
                 "Hora_Programada": r["Hora_Programada"],
